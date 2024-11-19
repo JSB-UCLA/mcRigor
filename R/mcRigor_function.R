@@ -2,80 +2,74 @@
 
 
 
-#' @title mcRigor
+
+#' @title mcRigor_DETECT
 #'
-#' @description To detect dubious metacells and optimize metacell partitioning
+#' @description Main functionality 1: To detect dubious metacells for a given metacell partition
 #'
 #'
 #' @param obj_singlecell Seurat object of the original single cells.
-#' @param cell_membership A dataframe, each column of which contains the metacell membership of single cells under a given gamma. 
-#' The column names should be the corresponding gamma's. The row names should be the single cell id's.
-#' @param Nrep The number of permutation repetitions we use when deriving the null.
+#' @param cell_membership A dataframe, each column of which contains the metacell membership of single cells under a given gamma (granularity level). 
+#' The column names should be the corresponding gamma's (in the character type). The row names should be the single cell id's.
+#' @param tgamma The target gamma value --- the gamma (in the character type) corresponding to the metacell partition where dubious metacells detection will be performed.
+#' tgamma has to be in the column names of cell_membership. If tgamma = NULL, dubious metacells detection will be performed on the metacell partition represented by the first column of cell_membership.
 #' @param assay_type The type of data assay yuo are using, depending on which different normalization would be used.
-#' @param mc_algo The metacell partition method you are using.
-#' @param Gammas The candidate pool of granularity levels to consider in optimization
+#' @param aggregate_method The method to aggregate single cell profiles into metacell profiles
+#' @param output_file The directory for output saving
+#' @param Nrep The number of permutation repetitions we use when deriving the null.
 #' @param test_cutoff The test size for dubious metacell detection testing
 #' @param thre_smooth A boolean indicating whether to smooth the threshold function
-#' @param thre_bw If thre_smooth is True, what is the bandwidth for smoothing
-#' @param D_bw A boolean indicating whether to smooth the dubious rate with respect to metacell size
-#' @param output_file The directory for output saving
+#' @param thre_bw If thre_smooth is True, thre_bw specifies the bandwidth for smoothing
 #' @param cor_method The method for gene correlation calculation description
 #' @param gene_filter A proportion. Genes expressed lower than this proportion will be filtered out.
 #' @param feature_use The number of genes to use in metacell testing.
 #' @param prePro A boolean indicating whether to normalize obj_singlecell for preprocessing.
 #' @param check_purity A boolean indicating whether to calculate the metacell purity of specific fields or not. 
 #' @param fields A vector of the fields of interest, ex. celltype. It should be a subset of obj_singlecell's meta.data.
-#' @param optim_method The method used for granularity level optimization. Default is trading off between sparsity and dubious rate
-#' @param dub_rate If tradeoff is not used for optimization, what is highest acceptable dubious rate
 #' @param draw  A boolean indicating whether to visualize the mcRigor results
 #' @param pur_metric Can be NULL or a metadata variable name, ex. cell type.
 #' @param step_save A boolean indicating whether to save the outputs step by step
 #' 
 #' 
-
-
-#'
-#'
 #' @return A list containing the following fields: 
 #' \item{best_graining_level}{The optimal graining level selected by mcRigor}
 #' \item{opt_metacell}{The metacell object build under the optimal graining level}
 #' \item{thre}{The thresholds for dubious metacell detection}
 #' \item{TabMC}{A dataframe containing the permutation results, elements to calculate the test statistics mcDiv and mcDiv null}
+#' \item{test_plot}{The scatter plots demonstrating the mcDiv values and the obtained thresholds for dubious metacell detection}
+#' \item{purity_plot}{A violin plot showing the purity distribution of the pur_metric covariate in dubious metacells and trustworthy metacells}
 #'
 
 
 #
-mcRigor <- function(obj_singlecell, 
-                    cell_membership = NULL, 
-                    assay_type = c('RNA', 'ATAC'),
-                    mc_algo = c('supercell', 'seacells', 'mc2', 'mc1'),
-                    Gammas = NULL,
-                    output_file = NULL,
-                    Nrep = 1,
-                    gene_filter = 0.1, 
-                    feature_use = 2000,
-                    cor_method = c('pearson', 'spearman'),
-                    prePro = F,
-                    test_cutoff = 0.01, 
-                    thre_smooth = T, 
-                    thre_bw = 1/6,
-                    D_bw = 10,
-                    optim_method = 'tradeoff',
-                    dub_rate=0.1, 
-                    draw = T, 
-                    pur_metric = NULL,
-                    check_purity = T,
-                    fields = NULL,
-                    step_save = T){
+mcRigor_DETECT <- function(obj_singlecell, 
+                           cell_membership = NULL, 
+                           tgamma = NULL,
+                           assay_type = c('RNA', 'ATAC'),
+                           aggregate_method = c('mean', 'sum', 'geom'),
+                           output_file = NULL,
+                           Nrep = 1,
+                           gene_filter = 0.1, 
+                           feature_use = 2000,
+                           cor_method = c('pearson', 'spearman'),
+                           prePro = T,
+                           test_cutoff = 0.01, 
+                           thre_smooth = T, 
+                           thre_bw = 1/6,
+                           draw = T, 
+                           pur_metric = NULL,
+                           check_purity = T,
+                           fields = NULL,
+                           step_save = T){
   
   assay_type = match.arg(assay_type)
   cor_method = match.arg(cor_method)
-  mc_algo = match.arg(mc_algo)
+  aggregate_method = match.arg(aggregate_method)
   
   if (prePro){
-    cat("Normalize data...\n")
-    if (assay_type == 'ATAC') obj_singlecell = Signac::RunTFIDF(obj_singlecell)
-    else obj_singlecell = Seurat::NormalizeData(obj_singlecell)
+    cat("Normalizing data...\n")
+    if (assay_type == 'ATAC') obj_singlecell = Signac::RunTFIDF(obj_singlecell, verbose = F)
+    else obj_singlecell = Seurat::NormalizeData(obj_singlecell, verbose = F)
   }
   
   if (is.null(fields)) {
@@ -86,14 +80,16 @@ mcRigor <- function(obj_singlecell,
   
   if (assay_type == 'ATAC'){
     feature_cutoff = paste0('q', floor((1 - feature_use / dim(obj_singlecell)[1]) * 100))
-    obj_singlecell = Signac::FindTopFeatures(obj_singlecell, min.cutoff = feature_cutoff)
+    obj_singlecell = Signac::FindTopFeatures(obj_singlecell, min.cutoff = feature_cutoff, verbose = F)
     top_gene = Seurat::VariableFeatures(obj_singlecell)
   } else {
-    obj_singlecell = Seurat::FindVariableFeatures(obj_singlecell, nfeatures = feature_use)
+    obj_singlecell = Seurat::FindVariableFeatures(obj_singlecell, nfeatures = feature_use, verbose = F)
     top_gene = Seurat::VariableFeatures(obj_singlecell)
   }
   
-  if (is.null(Gammas)) Gammas = colnames(cell_membership)
+  if (is.null(tgamma)) tgamma = colnames(cell_membership)[1]
+  
+  Gammas = colnames(cell_membership)
   
   TabMC_list = vector(mode = 'list', length = length(Gammas))
   names(TabMC_list) = Gammas
@@ -106,7 +102,7 @@ mcRigor <- function(obj_singlecell,
     named_membership = named_membership[assigned_cellid]
     
     obj_metacell = mcRigor_buildmc(obj_singlecell[, assigned_cellid], sc_membership = named_membership,
-                                   assay_type = assay_type, fields = fields,
+                                   assay_type = assay_type, fields = fields, aggregate_method = 'sum',
                                    doNorm = F)
     obj_metacell[['ZeroRate']] = 1 - obj_metacell[[paste0('nFeature_', Seurat::DefaultAssay(obj_metacell))]] / nrow(obj_metacell)
     
@@ -119,6 +115,10 @@ mcRigor <- function(obj_singlecell,
     colnames(mc_stats) = c('size', 'T_org', 'T_colperm',
                            paste0('T_rowperm', 1:Nrep), paste0('T_bothperm', 1:Nrep))
     #
+    cat('gamma =', gamma, '\n')
+    pb <- utils::txtProgressBar(style=3)
+    pbid = 0
+    
     for (select.label in metacell_id) {
       
       select_sc = names(named_membership)[named_membership == select.label]
@@ -158,10 +158,12 @@ mcRigor <- function(obj_singlecell,
       mc_stats[select.label, paste0('T_rowperm', 1:Nrep)] = T_perm[1,]
       mc_stats[select.label, paste0('T_bothperm', 1:Nrep)] = T_perm[2,]
       
-      cat('==')
+      pbid = pbid + 1
+      utils::setTxtProgressBar(pb, pbid / length(metacell_id))
       
     }
-    cat('\n')
+    
+    close(pb)
     
     purity_fields = colnames(obj_metacell@meta.data)[grep('_purity', colnames(obj_metacell@meta.data))]
     TabMC_list[[gamma]] =  cbind(as.numeric(gamma), 
@@ -179,11 +181,9 @@ mcRigor <- function(obj_singlecell,
       TabMC$TT_div[is.na(TabMC$TT_div)] = 1
       
       if (is.null(output_file)) 
-        output_file = paste0(mc_algo, '_tabmc_', assay_type, '.RData')
+        output_file = paste0('Tabmc_', assay_type, '_detect.RData')
       save(TabMC, file = output_file)
     }
-    
-    cat('gamma =', gamma, 'finished!\n')
     
   }
   
@@ -195,16 +195,264 @@ mcRigor <- function(obj_singlecell,
   TabMC$TT_div[is.na(TabMC$TT_div)] = 1
   
   if (is.null(output_file)) 
-    output_file = paste0(mc_algo, '_tabmc_', assay_type, '.RData')
+    output_file = paste0('Tabmc_', assay_type, '_detect.RData')
   save(TabMC, file = output_file)
   
   ###########
   
-  test_res = mcRigor_test(TabMC, test_cutoff = test_cutoff, dub_rate = dub_rate, 
-                          thre_smooth = thre_smooth, thre_bw = thre_bw, D_bw = D_bw,
-                          optim_method = optim_method, draw = draw, pur_metric = pur_metric)
-  opt_gamma = test_res$optimized$gamma
+  test_res = mcRigor_threshold(TabMC,
+                               test_cutoff = test_cutoff, 
+                               thre_smooth = thre_smooth, thre_bw = thre_bw, 
+                               draw = draw, pur_metric = pur_metric)
   Thre = test_res$threshold
+  
+  ##
+  
+  named_membership = cell_membership[[as.character(tgamma)]]
+  names(named_membership) = rownames(cell_membership)
+  assigned_cellid = names(named_membership)[named_membership != '' & !is.na(named_membership)]
+  named_membership = named_membership[assigned_cellid]
+  
+  test_stats = TabMC[TabMC$gamma == as.integer(tgamma),]
+  
+  obj_metacell = mcRigor_buildmc(obj_singlecell[, assigned_cellid], sc_membership = named_membership,
+                                 fields = fields, aggregate_method = aggregate_method,
+                                 add_testres = T, test_stats = test_stats, Thre = Thre)
+  print(table(obj_metacell$mcRigor))
+  
+  return(list(obj_metacell = obj_metacell, 
+              thre = Thre, 
+              TabMC = TabMC,
+              test_plot = test_res$test_plot,
+              purity_plot = test_res$purity_plot))
+}
+
+
+
+
+#' @title mcRigor_OPTIMIZE
+#'
+#' @description Main functionality 2: To select the optimal hyperparameter for metacell partitioning 
+#'
+#'
+#' @param obj_singlecell Seurat object of the original single cells.
+#' @param cell_membership A dataframe, each column of which contains the metacell membership of single cells under a given gamma. 
+#' The column names should be the corresponding gamma's. The row names should be the single cell id's.
+#' @param Nrep The number of permutation repetitions we use when deriving the null.
+#' @param assay_type The type of data assay yuo are using, depending on which different normalization would be used.
+#' @param Gammas The candidate pool of granularity levels to consider in optimization
+#' @param aggregate_method The method to aggregate single cell profiles into metacell profiles
+#' @param output_file The directory for output saving
+#' @param cor_method The method for gene correlation calculation description
+#' @param gene_filter A proportion. Genes expressed lower than this proportion will be filtered out.
+#' @param feature_use The number of genes to use in metacell testing.
+#' @param prePro A boolean indicating whether to normalize obj_singlecell for preprocessing.
+#' @param test_cutoff The test size for dubious metacell detection testing
+#' @param thre_smooth A boolean indicating whether to smooth the threshold function
+#' @param thre_bw If thre_smooth is True, thre_bw specifies the bandwidth for smoothing.
+#' @param check_purity A boolean indicating whether to calculate the metacell purity of specific fields or not. 
+#' @param fields A vector of the fields of interest, ex. celltype. It should be a subset of obj_singlecell's meta.data.
+#' @param D_bw A boolean indicating whether to smooth the dubious rate with respect to metacell size
+#' @param optim_method The method used for granularity level optimization. Default is trading off between sparsity and dubious rate
+#' @param weight The weight for dubious rate in the tradeoff.
+#' @param dub_rate If tradeoff is not used for optimization, what is highest acceptable dubious rate
+#' @param draw  A boolean indicating whether to visualize the mcRigor results
+#' @param pur_metric Can be NULL or a metadata variable name, ex. cell type.
+#' @param step_save A boolean indicating whether to save the outputs step by step
+#' 
+#' 
+#'
+#' @return A list containing the following fields: 
+#' \item{best_graining_level}{The optimal graining level selected by mcRigor}
+#' \item{opt_metacell}{The metacell object build under the optimal graining level}
+#' \item{scores}{A data frame containing the evaluation scores for each gamma}
+#' \item{optim_plot}{The line plot to visualize the tradeoff for hyperparameter opimization.}
+#' \item{thre}{The thresholds for dubious metacell detection}
+#' \item{TabMC}{A dataframe containing the permutation results, elements to calculate the test statistics mcDiv and mcDiv null}
+#'
+
+
+#
+mcRigor_OPTIMIZE <- function(obj_singlecell, 
+                             cell_membership = NULL, 
+                             assay_type = c('RNA', 'ATAC'),
+                             Gammas = NULL,
+                             aggregate_method = c('mean', 'sum', 'geom'),
+                             output_file = NULL,
+                             Nrep = 1,
+                             gene_filter = 0.1, 
+                             feature_use = 2000,
+                             cor_method = c('pearson', 'spearman'),
+                             prePro = T,
+                             test_cutoff = 0.01, 
+                             thre_smooth = T, 
+                             thre_bw = 1/6,
+                             D_bw = 10,
+                             optim_method = c('tradeoff', 'dub_rate_large', 'dub_rate_small'),
+                             weight = 0.5,
+                             dub_rate=0.1, 
+                             draw = T, 
+                             pur_metric = NULL,
+                             check_purity = T,
+                             fields = NULL,
+                             step_save = T){
+  
+  assay_type = match.arg(assay_type)
+  cor_method = match.arg(cor_method)
+  optim_method = match.arg(optim_method)
+  aggregate_method = match.arg(aggregate_method)
+  
+  if (prePro){
+    cat("Normalizing data...\n")
+    if (assay_type == 'ATAC') obj_singlecell = Signac::RunTFIDF(obj_singlecell, verbose = F)
+    else obj_singlecell = Seurat::NormalizeData(obj_singlecell, verbose = F)
+  }
+  
+  if (is.null(fields)) {
+    fields = sapply(colnames(obj_singlecell@meta.data),
+                    function(X) {is.character(obj_singlecell[[X]][,1]) | is.factor(obj_singlecell[[X]][,1])})
+    fields = names(fields[fields])
+  }
+  
+  if (assay_type == 'ATAC'){
+    feature_cutoff = paste0('q', floor((1 - feature_use / dim(obj_singlecell)[1]) * 100))
+    obj_singlecell = Signac::FindTopFeatures(obj_singlecell, min.cutoff = feature_cutoff, verbose = F)
+    top_gene = Seurat::VariableFeatures(obj_singlecell)
+  } else {
+    obj_singlecell = Seurat::FindVariableFeatures(obj_singlecell, nfeatures = feature_use, verbose = F)
+    top_gene = Seurat::VariableFeatures(obj_singlecell)
+  }
+  
+  if (is.null(Gammas)) Gammas = colnames(cell_membership)
+  
+  TabMC_list = vector(mode = 'list', length = length(Gammas))
+  names(TabMC_list) = Gammas
+  
+  for (gamma in Gammas) {
+    
+    named_membership = cell_membership[[gamma]]
+    names(named_membership) = rownames(cell_membership)
+    assigned_cellid = names(named_membership)[named_membership != '' & !is.na(named_membership)]
+    named_membership = named_membership[assigned_cellid]
+    
+    obj_metacell = mcRigor_buildmc(obj_singlecell[, assigned_cellid], sc_membership = named_membership,
+                                   assay_type = assay_type, fields = fields, aggregate_method = 'sum',
+                                   doNorm = F)
+    obj_metacell[['ZeroRate']] = 1 - obj_metacell[[paste0('nFeature_', Seurat::DefaultAssay(obj_metacell))]] / nrow(obj_metacell)
+    
+    ##########
+    
+    metacell_id = colnames(obj_metacell)
+    
+    mc_stats = data.frame(matrix(NA, nrow = length(metacell_id), ncol = 3+2*Nrep))
+    rownames(mc_stats) = metacell_id
+    colnames(mc_stats) = c('size', 'T_org', 'T_colperm',
+                           paste0('T_rowperm', 1:Nrep), paste0('T_bothperm', 1:Nrep))
+    #
+    cat('gamma =', gamma, '\n')
+    pb <- utils::txtProgressBar(style=3)
+    pbid = 0
+    
+    for (select.label in metacell_id) {
+      
+      select_sc = names(named_membership)[named_membership == select.label]
+      mc_stats[select.label, 'size'] = length(select_sc)
+      
+      if (length(select_sc) == 1) next
+      
+      if(dim(obj_singlecell)[1] > dim(obj_singlecell)[2]){
+        counts = Seurat::GetAssayData(object = obj_singlecell, layer = 'data')[top_gene, select_sc]
+      } else {
+        select_mc = obj_singlecell[, select_sc]
+        counts = Seurat::GetAssayData(select_mc, layer = 'data')
+      }
+      
+      counts = as.matrix(counts)
+      # counts = apply(counts, 2, function(x) x/sqrt(sum(x^2)))
+      
+      counts_var = counts[apply(counts, 1, 
+                                function(x) length(which(x>0)) > dim(counts)[2] * gene_filter), ]
+      
+      if (cor_method == 'pearson') dat = scale_cpp(t(counts_var))
+      else {
+        dat = apply(t(counts_var), 2, rank)
+        dat = scale_cpp(dat)
+      }
+      
+      p = dim(dat)[2]
+      n = dim(dat)[1]
+      
+      mc_stats[select.label, 'T_org'] = mc_indpd_stats_cpp(dat)
+      mc_stats[select.label, 'T_colperm'] = mc_indpd_stats_cpp(colwise_perm_cpp(dat))
+      
+      T_perm = sapply(1:Nrep, function(i) {
+        x = rowwise_perm_cpp(dat)
+        c(mc_indpd_stats_cpp(x), mc_indpd_stats_cpp(colwise_perm_cpp(x)))
+      })
+      mc_stats[select.label, paste0('T_rowperm', 1:Nrep)] = T_perm[1,]
+      mc_stats[select.label, paste0('T_bothperm', 1:Nrep)] = T_perm[2,]
+      
+      pbid = pbid + 1
+      utils::setTxtProgressBar(pb, pbid / length(metacell_id))
+      
+    }
+    
+    close(pb)
+    
+    purity_fields = colnames(obj_metacell@meta.data)[grep('_purity', colnames(obj_metacell@meta.data))]
+    TabMC_list[[gamma]] =  cbind(as.numeric(gamma), 
+                                 obj_metacell[['ZeroRate']],
+                                 obj_metacell[[purity_fields]], 
+                                 mc_stats)
+    rownames(TabMC_list[[gamma]]) = rownames(mc_stats)
+    
+    if (step_save){
+      TabMC = do.call(rbind, unname(TabMC_list))
+      colnames(TabMC)[1] = 'gamma'
+      colnames(TabMC)[2] = 'ZeroRate'
+      
+      TabMC$TT_div = TabMC$T_org / TabMC$T_colperm
+      TabMC$TT_div[is.na(TabMC$TT_div)] = 1
+      
+      if (is.null(output_file)) 
+        output_file = paste0('Tabmc_', assay_type, '_optimize.RData')
+      save(TabMC, file = output_file)
+    }
+    
+  }
+  
+  TabMC = do.call(rbind, unname(TabMC_list))
+  colnames(TabMC)[1] = 'gamma'
+  colnames(TabMC)[2] = 'ZeroRate'
+  
+  TabMC$TT_div = TabMC$T_org / TabMC$T_colperm
+  TabMC$TT_div[is.na(TabMC$TT_div)] = 1
+  
+  if (is.null(output_file)) 
+    output_file = paste0('Tabmc_', assay_type, '_optimize.RData')
+  save(TabMC, file = output_file)
+  
+  ###########
+  
+  test_res = mcRigor_threshold(TabMC, 
+                               test_cutoff = test_cutoff,
+                               thre_smooth = thre_smooth, thre_bw = thre_bw,
+                               draw = draw, pur_metric = pur_metric)
+  Thre = test_res$threshold
+  TabMC = test_res$TabMC
+  
+  if (is.null(output_file)) 
+    output_file = paste0('Tabmc_', assay_type, '_optimize.RData')
+  save(TabMC, file = output_file)
+  
+  tradeoff_res = mcRigor_tradeoff(TabMC, 
+                                  threshold = Thre,
+                                  optim_method = optim_method, 
+                                  D_bw = D_bw,
+                                  weight = weight,
+                                  dub_rate = dub_rate, 
+                                  draw = draw)
+  opt_gamma = tradeoff_res$optimized$gamma
   
   ##
   
@@ -216,13 +464,17 @@ mcRigor <- function(obj_singlecell,
   test_stats = TabMC[TabMC$gamma == opt_gamma,]
   
   obj_metacell = mcRigor_buildmc(obj_singlecell[, assigned_cellid], sc_membership = opt_named_membership,
-                                 fields = fields, 
+                                 fields = fields, aggregate_method = aggregate_method,
                                  add_testres = T, test_stats = test_stats, Thre = Thre)
+  cat('optimal gamma =', opt_gamma, '\n')
+  print(table(obj_metacell$mcRigor))
   
   return(list(best_graining_level = opt_gamma, 
               opt_metacell = obj_metacell, 
+              scores = tradeoff_res$scores,
               thre = Thre, 
-              TabMC = TabMC))
+              TabMC = TabMC,
+              optim_plot = tradeoff_res$optim_plot))
 }
 
 
@@ -230,51 +482,39 @@ mcRigor <- function(obj_singlecell,
 
 
 
-#' @title mcRigor_test
+#' @title mcRigor_threshold
 #'
-#' @description A building block of the main function mcRigor. To detect dubious metacells and optimize metacell partitioning based on the output permutation results (TabMC)
+#' @description A building block of the main functions. To derive the thresholds for detecting dubious metacells based on the output permutation results (TabMC)
 #'
 #'
 #' @param TabMC A dataframe containing the permutation results. Saved in the previous steps
 #' @param test_cutoff The test size for dubious metacell detection testing
 #' @param thre_smooth A boolean indicating whether to smooth the threshold function
 #' @param thre_bw If thre_smooth is True, what is the bandwidth for smoothing
-#' @param D_bw A boolean indicating whether to smooth the dubious rate with respect to metacell size
-#' @param optim_method The method used for granularity level optimization. Default is trading off between sparsity and dubious rate
-#' @param weight The weight for dubious rate in the tradeoff.
-#' @param dub_rate If tradeoff is not used for optimization, what is highest acceptable dubious rate
 #' @param draw  A boolean indicating whether to visualize the mcRigor results
 #' @param palpha Point alpha value for transparency in drawing.
-#' @param pur_metric Can be NULL or a metadata variable name, ex. cell type.
 #' @param org_color The colors indicating metacell purities or other interested factors
 #' @param null_color The color for the null.
+#' @param pur_metric Name of the covariate that we want to compute purity on. Can be NULL or a metadata variable name, ex. cell type.
 #' 
-
-
-#'
 #'
 #' @return A list containing the following fields: 
-#' \item{optimized}{The optimization results, containing the optimal gamma and its corresponding Sore}
-#' \item{scores}{A data frame containing the evaluation scores for each gamma}
 #' \item{threshold}{The thresholds for dubious metacell detection}
-#' \item{TabMC}{A dataframe containing the permutation results, elements to calculate the test statistics mcDiv and mcDiv null}
-#' \item{test_plot}{Plots showing the mcRigor results}
-#' \item{plot_list}{A list of separate plots}
+#' \item{TabMC}{A dataframe containing the permutation results and the testing results given by mcRigor}
+#' \item{test_plot}{The scatter plots demonstrating the mcDiv values and the obtained thresholds for dubious metacell detection}
+#' \item{purity_plot}{A violin plot showing the purity distribution of the pur_metric covariate in dubious metacells and trustworthy metacells}
 #'
 
 
-mcRigor_test <- function(TabMC, 
-                         test_cutoff = 0.01, 
-                         thre_smooth = T, thre_bw = 1/6,
-                         D_bw = 10,
-                         optim_method = 'tradeoff',
-                         dub_rate=0.1, 
-                         weight = 0.5,
-                         draw = T,
-                         palpha = 1,
-                         org_color = c('red', 'orange','yellow', 'lightblue'),  # c('#CCA453')
-                         null_color = '#666666',
-                         pur_metric = NULL) {
+mcRigor_threshold <- function(TabMC, 
+                              test_cutoff = 0.01, 
+                              thre_smooth = T, 
+                              thre_bw = 1/6,
+                              draw = T,
+                              palpha = 1,
+                              org_color = c('red', 'orange','yellow', 'lightblue'),  # c('#CCA453')
+                              null_color = '#666666',
+                              pur_metric = NULL) {
   
   TabMC$depctr_TT_div = TabMC$T_rowperm1 / TabMC$T_bothperm1
   TabMC$depctr_TT_div[is.na(TabMC$depctr_TT_div)] = 1
@@ -361,23 +601,74 @@ mcRigor_test <- function(TabMC,
     pthre12 = p12 + ggplot2::geom_path(data = Thre, mapping = ggplot2::aes_string(x='size', y='thre'), color='red') 
   }
   
-  TabMC$testres = 'trustworthy'
+  TabMC$mcRigor = 'trustworthy'
   for (mcid in 1:dim(TabMC)[1]) {
-    if (TabMC$size[mcid] >1 && TabMC$TT_div[mcid] > Thre$thre[Thre$size == TabMC$size[mcid]]) TabMC$testres[mcid] = 'dubious'
-    # if (TabMC$size[mcid] >1 && all(TabMC$TT_div[mcid] > TabMC[mcid, rowperm_col] / TabMC[mcid, bothperm_col]) ) TabMC$testres[mcid] = 'dubious'
+    if (TabMC$size[mcid] >1 && TabMC$TT_div[mcid] > Thre$thre[Thre$size == TabMC$size[mcid]]) TabMC$mcRigor[mcid] = 'dubious'
+    # if (TabMC$size[mcid] >1 && all(TabMC$TT_div[mcid] > TabMC[mcid, rowperm_col] / TabMC[mcid, bothperm_col]) ) TabMC$mcRigor[mcid] = 'dubious'
     
   }
-  print(table(TabMC$testres))
+  # print(table(TabMC$mcRigor))
   
+  pvioin = NULL
   if (draw) {
-    pviolin = ggplot2::ggplot(TabMC) + ggplot2::geom_violin(mapping = ggplot2::aes_string(y=pur_metric, x='testres', fill='testres')) +
+    pviolin = ggplot2::ggplot(TabMC) + ggplot2::geom_violin(mapping = ggplot2::aes_string(y=pur_metric, x='mcRigor', fill='mcRigor')) +
       ggplot2::theme(legend.position = 'none') + ggplot2::xlab(NULL) + ggplot2::ylab(pur_metric)
-    # pviolin = ggplot2::ggplot(TabMC) + geom_boxplot(mapping = ggplot2::aes_string(y=pur_metric, x='testres', fill='testres')) +
+    # pviolin = ggplot2::ggplot(TabMC) + geom_boxplot(mapping = ggplot2::aes_string(y=pur_metric, x='mcRigor', fill='mcRigor')) +
     #   ggplot2::theme(legend.position = 'none') + ggplot2::xlab(NULL) + ggplot2::ylab(pur_metric) +
     #   ggplot2::scale_fill_manual(values = c('#310690', '#F0F921'))
   }
   
   ###
+  
+  test_plot = NULL
+  if (draw) {
+    test_plot = cowplot::plot_grid(cowplot::plot_grid(pthre2, pthre1, nrow = 1),
+                                   cowplot::plot_grid(p_legend, nrow = 1), 
+                                   nrow = 1, rel_widths = c(1,0.1))
+  }
+  
+  return(list(threshold = Thre, 
+              TabMC = TabMC,
+              test_plot = test_plot,
+              purity_plot = pviolin))
+}
+
+
+
+
+
+#' @title mcRigor_tradeoff
+#'
+#' @description A building block of the main functions. To evaluate each metacell partition and optimize metacell partitioning based on the output permutation results (TabMC) and thresholds (threshold)
+#'
+#'
+#' @param TabMC A dataframe containing the permutation results. Saved in the previous steps
+#' @param threshold A dataframe containing the dubious metacell detection thresholds given by mcRigor_threshold
+#' @param D_bw A boolean indicating whether to smooth the dubious rate with respect to metacell size
+#' @param optim_method The method used for granularity level optimization. Default is trading off between sparsity and dubious rate
+#' @param weight The weight for dubious rate in the tradeoff.
+#' @param dub_rate If tradeoff is not used for optimization, what is highest acceptable dubious rate
+#' @param draw  A boolean indicating whether to visualize the mcRigor results
+#' 
+#'
+#' @return A list containing the following fields: 
+#' \item{optimized}{The optimization results, containing the optimal gamma and its corresponding Sore}
+#' \item{scores}{A data frame containing the evaluation scores for each gamma}
+#' \item{optim_plot}{The line plot to visualize the tradeoff for hyperparameter opimization.}
+#'
+
+
+mcRigor_tradeoff <- function(TabMC, 
+                             threshold,
+                             D_bw = 10,
+                             optim_method = c('tradeoff', 'dub_rate_large', 'dub_rate_small'),
+                             dub_rate=0.1, 
+                             weight = 0.5,
+                             draw = T) {
+  
+  optim_method = match.arg(optim_method)
+  
+  Thre = threshold
   
   DD <- data.frame(gamma=sort(unique(TabMC$gamma)))
   # DD <- data.frame(gamma=DD$gamma[DD$gamma %% 5 == 0])
@@ -386,8 +677,8 @@ mcRigor_test <- function(TabMC,
   
   for (gamma in DD$gamma) {
     
-    mcs = TabMC[TabMC$gamma==gamma & TabMC$testres == 'trustworthy',]
-    dub_mc = TabMC[TabMC$gamma==gamma & TabMC$testres == 'dubious',]
+    mcs = TabMC[TabMC$gamma==gamma & TabMC$mcRigor == 'trustworthy',]
+    dub_mc = TabMC[TabMC$gamma==gamma & TabMC$mcRigor == 'dubious',]
     
     DD$D[DD$gamma == gamma] = sum(dub_mc$size) / (sum(mcs$size) + sum(dub_mc$size)) 
     
@@ -410,16 +701,16 @@ mcRigor_test <- function(TabMC,
   
   opt_gamma = switch(optim_method,
                      tradeoff = DD$gamma[which.max(DD$score)],
-                     large = max(DD$gamma[DD$D < dub_rate]),
-                     small = DD$gamma[which(DD$D >= dub_rate)[1] - 1])
-  # opt_gamma = DD$gamma[which.min(DD$score)]
+                     dub_rate_large = max(DD$gamma[DD$D < dub_rate]),
+                     dub_rate_small = DD$gamma[which(DD$D >= dub_rate)[1] - 1])
   
   optim = data.frame(gamma = opt_gamma, D = DD$D[DD$gamma==opt_gamma], 
                      score = DD$score[DD$gamma == opt_gamma], 
                      cross_score = 1 - 1/2 * DD$D[DD$gamma==opt_gamma] - 1/2 * DD$ZeroRate[DD$gamma==opt_gamma])
-  # optim
   
-  test_plot = plot_list = NULL
+  optimized = as.list(optim)
+  
+  optim_plot = NULL
   
   if (draw) {
     
@@ -434,9 +725,6 @@ mcRigor_test <- function(TabMC,
         ggplot2::ylab(' ') +
         ggplot2::coord_cartesian(ylim = c(0,1), clip = 'off') +
         ggplot2::theme_light()+ ggplot2::theme(aspect.ratio = 2/3)
-      suppressWarnings(elbow_legend <- cowplot::get_legend(pelbow))
-      pelbow = pelbow + ggplot2::theme(legend.position = 'none')
-      # pelbow
     } else {
       pelbow = ggplot2::ggplot(DD, ggplot2::aes_string(x='gamma', y='D')) + ggplot2::geom_path() +
         ggplot2::geom_point(data = optim, mapping = ggplot2::aes_string(x='gamma', y='D'), col='red', size=3) +
@@ -445,29 +733,14 @@ mcRigor_test <- function(TabMC,
         ggplot2::theme_light()+ ggplot2::theme(aspect.ratio = 2/3)
     }
     
-    # pviolin_optim = ggplot(TabMC[TabMC$gamma == optim$gamma,]) + 
-    #   geom_violin(mapping = aes_string(y=pur_metric, x='testres', fill='testres')) +
-    #   theme(legend.position = 'none') + xlab(NULL) + ylab(pur_metric)
     
-    test_plot = cowplot::plot_grid(cowplot::plot_grid(pthre2, pthre1, 
-                                                      pviolin, pelbow, nrow = 2),
-                                   cowplot::plot_grid(p_legend, elbow_legend, nrow = 2), 
-                                   nrow = 1, rel_widths = c(1,0.1))
-    # print(test_plot)
+    optim_plot = pelbow
     
-    plot_list = list(pthre=pthre2, pthre_null = pthre1, 
-                     pviolin=pviolin, pelbow=pelbow,
-                     legend1 = ggpubr::as_ggplot(p_legend),
-                     legend2 = ggpubr::as_ggplot(elbow_legend))
   }
   
-  
-  return(list(optimized = as.list(optim),
-              threshold = Thre, 
+  return(list(optimized = optimized,
               scores = DD,
-              TabMC = TabMC,
-              test_plot = test_plot,
-              plot_list = plot_list))
+              optim_plot = optim_plot))
 }
 
 
@@ -517,7 +790,7 @@ mcRigor_buildmc <- function(obj_singlecell,
                             sc_membership = NULL, 
                             assay_type = c('RNA', 'ATAC'), 
                             doNorm = T,
-                            aggregate_method = c('sum', 'mean', 'geom'),
+                            aggregate_method = c('mean', 'sum', 'geom'),
                             doAssign = T, 
                             fields = NULL,
                             covariate_method = 'absolute', 
@@ -539,7 +812,7 @@ mcRigor_buildmc <- function(obj_singlecell,
     counts_metacell = Seurat::AggregateExpression(obj_singlecell,
                                                   return.seurat = F,
                                                   group.by = 'Metacell',
-                                                  verbose  = T)[[1]]
+                                                  verbose  = F)[[1]]
     if (is.numeric(sc_membership[1])) {
       mc_names = sapply(colnames(counts_metacell), function(x) substr(x, start = 2, stop = 100000))
       colnames(counts_metacell) = as.numeric(mc_names)
@@ -556,17 +829,17 @@ mcRigor_buildmc <- function(obj_singlecell,
   
   if (assay_type == 'ATAC') {
     
-    obj_metacell = Signac::CreateChromatinAssay(counts = counts_metacell,
-                                                sep = c('-', '-'))
-    obj_metacell = Seurat::CreateSeuratObject(counts = obj_metacell,
-                                              assay = 'peaks')
+    suppressWarnings(obj_metacell <- Signac::CreateChromatinAssay(counts = counts_metacell,
+                                                                  sep = c('-', '-')))
+    suppressWarnings(obj_metacell <- Seurat::CreateSeuratObject(counts = obj_metacell,
+                                                                assay = 'peaks'))
     # obj_metacell[['peaks']]@meta.features = obj_singlecell[['peaks']]@meta.features
-    if (doNorm) obj_metacell = Signac::RunTFIDF(obj_metacell)
+    if (doNorm) obj_metacell = Signac::RunTFIDF(obj_metacell, verbose = F)
     
   } else {
     
-    obj_metacell = Seurat::CreateSeuratObject(counts = counts_metacell)
-    if (doNorm) obj_metacell = Seurat::NormalizeData(obj_metacell)
+    suppressWarnings(obj_metacell <- Seurat::CreateSeuratObject(counts = counts_metacell))
+    if (doNorm) obj_metacell = Seurat::NormalizeData(obj_metacell, verbose = F)
     
   }
   
@@ -580,7 +853,7 @@ mcRigor_buildmc <- function(obj_singlecell,
       fields = fields[sapply(fields, function(X) length(table(obj_singlecell[[X]])) > 1)]
     }
     
-    message("Assign metadata to metacells and compute purities...\n")
+    # cat("Assign metadata to metacells and compute purities...\n")
     for (f in fields) {
       
       if (!all(is.na(obj_singlecell[[f]][,1]))) {
@@ -614,30 +887,30 @@ mcRigor_buildmc <- function(obj_singlecell,
     if (is.null(test_stats)) 
       stop('To add test results to the metacell object, please provide the calculated test statistics (test_stats).')
     if (is.null(Thre)) {
-      Thre = mcRigor_test(test_stats, test_cutoff = test_cutoff)$threshold
-      message('Testing thresholds (Thre) not provided. Calculating thresholds with defaults...')
+      Thre = mcRigor_threshold(test_stats, test_cutoff = test_cutoff)$threshold
+      cat('Testing thresholds (Thre) not provided. Calculating thresholds with defaults...')
     }
     
     if (!all(colnames(obj_metacell) %in% rownames(test_stats))){
       obj_metacell$TT_div = NA
       if (prePro){
-        cat("Normalize sc data...\n")
-        if (assay_type == 'ATAC') obj_singlecell = Signac::RunTFIDF(obj_singlecell)
-        else obj_singlecell = Seurat::NormalizeData(obj_singlecell)
+        cat("Normalizing sc data...\n")
+        if (assay_type == 'ATAC') obj_singlecell = Signac::RunTFIDF(obj_singlecell, verbose = F)
+        else obj_singlecell = Seurat::NormalizeData(obj_singlecell, verbose = F)
       }
       
       if (assay_type == 'ATAC'){
         feature_cutoff = paste0('q', floor((1 - feature_use / dim(obj_singlecell)[1]) * 100))
-        obj_singlecell = Signac::FindTopFeatures(obj_singlecell, min.cutoff = feature_cutoff)
+        obj_singlecell = Signac::FindTopFeatures(obj_singlecell, min.cutoff = feature_cutoff, verbose = F)
         top_gene = Seurat::VariableFeatures(obj_singlecell)
       } else {
-        obj_singlecell = Seurat::FindVariableFeatures(obj_singlecell, nfeatures = feature_use)
+        obj_singlecell = Seurat::FindVariableFeatures(obj_singlecell, nfeatures = feature_use, verbose = F)
         top_gene = Seurat::VariableFeatures(obj_singlecell)
       }
     }
     
-    obj_metacell$testres = 'trustworthy'
-    obj_metacell@misc$cell_membership$testres_sc = 'trustworthy'
+    obj_metacell$mcRigor = 'trustworthy'
+    obj_metacell@misc$cell_membership$mcRigor_sc = 'trustworthy'
     
     for (mcid in colnames(obj_metacell)) {
       
@@ -645,8 +918,8 @@ mcRigor_buildmc <- function(obj_singlecell,
         
         if (obj_metacell$size[mcid] > 1 && 
             test_stats[mcid, 'TT_div'] > Thre$thre[Thre$size == obj_metacell$size[mcid]]) {
-          obj_metacell$testres[mcid] = 'dubious'
-          obj_metacell@misc$cell_membership$testres_sc[obj_metacell@misc$cell_membership$Metacell == mcid] = 'dubious'
+          obj_metacell$mcRigor[mcid] = 'dubious'
+          obj_metacell@misc$cell_membership$mcRigor_sc[obj_metacell@misc$cell_membership$Metacell == mcid] = 'dubious'
         }
         
       } else {
@@ -686,21 +959,21 @@ mcRigor_buildmc <- function(obj_singlecell,
         
         if (obj_metacell$size[mcid] %in% Thre$size) {
           if (mc_TT_div > Thre$thre[Thre$size == obj_metacell$size[mcid]]) {
-            obj_metacell$testres[mcid] = 'dubious'
-            obj_metacell@misc$cell_membership$testres_sc[obj_metacell@misc$cell_membership$Metacell == mcid] = 'dubious'
+            obj_metacell$mcRigor[mcid] = 'dubious'
+            obj_metacell@misc$cell_membership$mcRigor_sc[obj_metacell@misc$cell_membership$Metacell == mcid] = 'dubious'
           }
         } else {
           temp_thre = stats::approx(x = Thre$size, y = Thre$thre, xout = obj_metacell$size[mcid], 
                                     yleft = min(Thre$thre), yright = max(Thre$thre))$y
           if (mc_TT_div > temp_thre) {
-            obj_metacell$testres[mcid] = 'dubious'
-            obj_metacell@misc$cell_membership$testres_sc[obj_metacell@misc$cell_membership$Metacell == mcid] = 'dubious'
+            obj_metacell$mcRigor[mcid] = 'dubious'
+            obj_metacell@misc$cell_membership$mcRigor_sc[obj_metacell@misc$cell_membership$Metacell == mcid] = 'dubious'
           }
         }
         
       }
     }
-    print(table(obj_metacell$testres))
+    # print(table(obj_metacell$mcRigor))
     
   }
   
@@ -916,13 +1189,13 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
   if(is.character(sc.reduction)){
     # if sc_reduction does not exist compute pca and run UMAP:
     if(is.null(obj_singlecell@reductions[[sc.reduction]])){
-      message("Low dimensionnal embessing not found in obj_singlecell")
-      message("Computing PCA ...")
-      obj_singlecell <- Seurat::NormalizeData(obj_singlecell)
-      obj_singlecell <- Seurat::FindVariableFeatures(obj_singlecell)
-      obj_singlecell <- Seurat::ScaleData(obj_singlecell)
+      cat("Low dimensionnal embessing not found in obj_singlecell")
+      cat("Computing PCA ...")
+      obj_singlecell <- Seurat::NormalizeData(obj_singlecell, verbose = F)
+      obj_singlecell <- Seurat::FindVariableFeatures(obj_singlecell, verbose = F)
+      obj_singlecell <- Seurat::ScaleData(obj_singlecell, verbose = F)
       obj_singlecell <- Seurat::RunPCA(obj_singlecell, verbose = F)
-      message("Running UMAP ...")
+      cat("Running UMAP ...")
       obj_singlecell <- Seurat::RunUMAP(obj_singlecell, reduction = "pca", dims = c(1:20), verbose = F)
       scCoord <- Seurat::Embeddings(obj_singlecell@reductions[["umap"]])
     } else{
@@ -953,9 +1226,9 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
   }
   
   if (dub_mc_test.label) {
-    if ('testres' %in% colnames(obj_metacell@meta.data)) {
+    if ('mcRigor' %in% colnames(obj_metacell@meta.data)) {
       centroids[['dub_mc_test']] = NA
-      centroids[['dub_mc_test']][obj_metacell$testres == 'dubious'] = colnames(obj_metacell)[obj_metacell$testres == 'dubious']
+      centroids[['dub_mc_test']][obj_metacell$mcRigor == 'dubious'] = colnames(obj_metacell)[obj_metacell$mcRigor == 'dubious']
     } else stop('Cannot label dubious metacells since test results are not provided.')
   }
   

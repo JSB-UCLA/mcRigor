@@ -9,7 +9,7 @@ mcRigor_buildmc(
   sc_membership = NULL,
   assay_type = c("RNA", "ATAC"),
   doNorm = T,
-  aggregate_method = c("sum", "mean", "geom"),
+  aggregate_method = c("mean", "sum", "geom"),
   doAssign = T,
   fields = NULL,
   covariate_method = "absolute",
