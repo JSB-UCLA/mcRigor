@@ -3,7 +3,7 @@
 
 
 
-#' @title mcRigor_DETECT
+#' @title Main functionality 1: To detect dubious metacells for a given metacell partition
 #'
 #' @description Main functionality 1: To detect dubious metacells for a given metacell partition
 #'
@@ -32,8 +32,8 @@
 #' 
 #' 
 #' @return A list containing the following fields: 
-#' \item{best_graining_level}{The optimal graining level selected by mcRigor}
-#' \item{opt_metacell}{The metacell object build under the optimal graining level}
+#' \item{mc_res}{A named vector indicating whether each metacll is dubious or trustworthy}
+#' \item{obj_metacell}{The metacell Seurat object with the mcRigor detection results in the metadata}
 #' \item{thre}{The thresholds for dubious metacell detection}
 #' \item{TabMC}{A dataframe containing the permutation results, elements to calculate the test statistics mcDiv and mcDiv null}
 #' \item{test_plot}{The scatter plots demonstrating the mcDiv values and the obtained thresholds for dubious metacell detection}
@@ -220,7 +220,8 @@ mcRigor_DETECT <- function(obj_singlecell,
                                  add_testres = T, test_stats = test_stats, Thre = Thre)
   print(table(obj_metacell$mcRigor))
   
-  return(list(obj_metacell = obj_metacell, 
+  return(list(mc_res = obj_metacell$mcRigor,
+              obj_metacell = obj_metacell, 
               thre = Thre, 
               TabMC = TabMC,
               test_plot = test_res$test_plot,
@@ -230,7 +231,7 @@ mcRigor_DETECT <- function(obj_singlecell,
 
 
 
-#' @title mcRigor_OPTIMIZE
+#' @title Main functionality 2: To select the optimal hyperparameter for metacell partitioning 
 #'
 #' @description Main functionality 2: To select the optimal hyperparameter for metacell partitioning 
 #'
@@ -263,8 +264,9 @@ mcRigor_DETECT <- function(obj_singlecell,
 #' 
 #'
 #' @return A list containing the following fields: 
-#' \item{best_graining_level}{The optimal graining level selected by mcRigor}
-#' \item{opt_metacell}{The metacell object build under the optimal graining level}
+#' \item{best_granularity_level}{The optimal granularity level selected by mcRigor}
+#' \item{best_Score}{The evaluation score for the metacell partition given by the optimal granularity level selected by mcRigor}
+#' \item{opt_metacell}{The metacell object build under the optimal granularity level}
 #' \item{scores}{A data frame containing the evaluation scores for each gamma}
 #' \item{optim_plot}{The line plot to visualize the tradeoff for hyperparameter opimization.}
 #' \item{thre}{The thresholds for dubious metacell detection}
@@ -324,6 +326,7 @@ mcRigor_OPTIMIZE <- function(obj_singlecell,
   }
   
   if (is.null(Gammas)) Gammas = colnames(cell_membership)
+  else Gammas = as.character(Gammas)
   
   TabMC_list = vector(mode = 'list', length = length(Gammas))
   names(TabMC_list) = Gammas
@@ -469,7 +472,8 @@ mcRigor_OPTIMIZE <- function(obj_singlecell,
   cat('optimal gamma =', opt_gamma, '\n')
   print(table(obj_metacell$mcRigor))
   
-  return(list(best_graining_level = opt_gamma, 
+  return(list(best_granularity_level = opt_gamma, 
+              best_Score = tradeoff_res$optimized$Score,
               opt_metacell = obj_metacell, 
               scores = tradeoff_res$scores,
               thre = Thre, 
@@ -482,7 +486,7 @@ mcRigor_OPTIMIZE <- function(obj_singlecell,
 
 
 
-#' @title mcRigor_threshold
+#' @title A building block of the main functions. To derive the thresholds for detecting dubious metacells based on the output permutation results (TabMC)
 #'
 #' @description A building block of the main functions. To derive the thresholds for detecting dubious metacells based on the output permutation results (TabMC)
 #'
@@ -637,7 +641,7 @@ mcRigor_threshold <- function(TabMC,
 
 
 
-#' @title mcRigor_tradeoff
+#' @title A building block of the main functions. To evaluate each metacell partition and optimize metacell partitioning based on the output permutation results (TabMC) and thresholds (threshold)
 #'
 #' @description A building block of the main functions. To evaluate each metacell partition and optimize metacell partitioning based on the output permutation results (TabMC) and thresholds (threshold)
 #'
@@ -672,7 +676,7 @@ mcRigor_tradeoff <- function(TabMC,
   
   DD <- data.frame(gamma=sort(unique(TabMC$gamma)))
   # DD <- data.frame(gamma=DD$gamma[DD$gamma %% 5 == 0])
-  DD$D <- 0
+  DD$DubRate <- 0
   DD$ZeroRate <- 0
   
   for (gamma in DD$gamma) {
@@ -680,33 +684,33 @@ mcRigor_tradeoff <- function(TabMC,
     mcs = TabMC[TabMC$gamma==gamma & TabMC$mcRigor == 'trustworthy',]
     dub_mc = TabMC[TabMC$gamma==gamma & TabMC$mcRigor == 'dubious',]
     
-    DD$D[DD$gamma == gamma] = sum(dub_mc$size) / (sum(mcs$size) + sum(dub_mc$size)) 
+    DD$DubRate[DD$gamma == gamma] = sum(dub_mc$size) / (sum(mcs$size) + sum(dub_mc$size)) 
     
     DD$ZeroRate[DD$gamma == gamma] = mean(TabMC[TabMC$gamma == gamma, 'ZeroRate'])
     
   }
   
-  DD = DD[!is.nan(DD$D),]
+  DD = DD[!is.nan(DD$DubRate),]
   if (max(DD$gamma) - min(DD$gamma) > 5){
-    DD$D = stats::lowess(x = DD$gamma, y = DD$D, f = D_bw / (max(DD$gamma) - min(DD$gamma)))$y
+    DD$DubRate = stats::lowess(x = DD$gamma, y = DD$DubRate, f = D_bw / (max(DD$gamma) - min(DD$gamma)))$y
   }
-  # DD$score = (DD$ZeroRate * (max(DD$D) - min(DD$D)) + DD$D * (max(DD$ZeroRate) - min(DD$ZeroRate))) /
-  #   (max(DD$D) - min(DD$D) + max(DD$ZeroRate) - min(DD$ZeroRate))
+  # DD$Score = (DD$ZeroRate * (max(DD$DubRate) - min(DD$DubRate)) + DD$DubRate * (max(DD$ZeroRate) - min(DD$ZeroRate))) /
+  #   (max(DD$DubRate) - min(DD$DubRate) + max(DD$ZeroRate) - min(DD$ZeroRate))
   if (is.null(weight)) {
-    weight = (max(DD$ZeroRate) - min(DD$ZeroRate)) / (max(DD$D) - min(DD$D) + max(DD$ZeroRate) - min(DD$ZeroRate))
+    weight = (max(DD$ZeroRate) - min(DD$ZeroRate)) / (max(DD$DubRate) - min(DD$DubRate) + max(DD$ZeroRate) - min(DD$ZeroRate))
   }
-  DD$score = DD$ZeroRate * (1-weight) + DD$D * weight
-  # DD$score = lowess(x = DD$gamma, y = DD$score, f = 7 / (max(DD$gamma) - min(DD$gamma)))$y  # bandwidth around 5-10, f = 1/20 or f = 10 / (max(DD$gamma) - min(DD$gamma)) 
-  DD$score = 1 - DD$score
+  DD$Score = DD$ZeroRate * (1-weight) + DD$DubRate * weight
+  # DD$Score = lowess(x = DD$gamma, y = DD$Score, f = 7 / (max(DD$gamma) - min(DD$gamma)))$y  # bandwidth around 5-10, f = 1/20 or f = 10 / (max(DD$gamma) - min(DD$gamma)) 
+  DD$Score = 1 - DD$Score
   
   opt_gamma = switch(optim_method,
-                     tradeoff = DD$gamma[which.max(DD$score)],
-                     dub_rate_large = max(DD$gamma[DD$D < dub_rate]),
-                     dub_rate_small = DD$gamma[which(DD$D >= dub_rate)[1] - 1])
+                     tradeoff = DD$gamma[which.max(DD$Score)],
+                     dub_rate_large = max(DD$gamma[DD$DubRate < dub_rate]),
+                     dub_rate_small = DD$gamma[which(DD$DubRate >= dub_rate)[1] - 1])
   
-  optim = data.frame(gamma = opt_gamma, D = DD$D[DD$gamma==opt_gamma], 
-                     score = DD$score[DD$gamma == opt_gamma], 
-                     cross_score = 1 - 1/2 * DD$D[DD$gamma==opt_gamma] - 1/2 * DD$ZeroRate[DD$gamma==opt_gamma])
+  optim = data.frame(gamma = opt_gamma, DubRate = DD$DubRate[DD$gamma==opt_gamma], 
+                     Score = DD$Score[DD$gamma == opt_gamma], 
+                     cross_Score = 1 - 1/2 * DD$DubRate[DD$gamma==opt_gamma] - 1/2 * DD$ZeroRate[DD$gamma==opt_gamma])
   
   optimized = as.list(optim)
   
@@ -715,20 +719,20 @@ mcRigor_tradeoff <- function(TabMC,
   if (draw) {
     
     if (optim_method == 'tradeoff') {
-      pelbow = ggplot2::ggplot(DD, ggplot2::aes(x=gamma, y=D)) + ggplot2::geom_path(ggplot2::aes(col = 'D')) +
-        # ggplot2::geom_point(data = optim, mapping = ggplot2::aes_string(x='gamma', y='D'), col='red', size=3) +
+      pelbow = ggplot2::ggplot(DD, ggplot2::aes(x=gamma, y=DubRate)) + ggplot2::geom_path(ggplot2::aes(col = 'DubRate')) +
+        # ggplot2::geom_point(data = optim, mapping = ggplot2::aes_string(x='gamma', y='DubRate'), col='red', size=3) +
         ggplot2::annotate('text', x=optim$gamma, y=-0.03, label=optim$gamma, color='red', size = 3) +
         ggplot2::geom_path(ggplot2::aes(x = gamma, y = ZeroRate, col = 'ZeroRate')) + 
-        ggplot2::geom_path(ggplot2::aes(x = gamma, y = score, col = 'Score')) +
-        ggplot2::scale_color_manual(name = NULL, values = c('Score' = 'darkred', 'D' = 'darkblue', 'ZeroRate' = 'darkgreen')) +
+        ggplot2::geom_path(ggplot2::aes(x = gamma, y = Score, col = 'Score')) +
+        ggplot2::scale_color_manual(name = NULL, values = c('Score' = 'darkred', 'DubRate' = 'darkblue', 'ZeroRate' = 'darkgreen')) +
         ggplot2::geom_vline(xintercept = optim$gamma, col = 'red', linetype = 'dashed') +
         ggplot2::ylab(' ') +
         ggplot2::coord_cartesian(ylim = c(0,1), clip = 'off') +
         ggplot2::theme_light()+ ggplot2::theme(aspect.ratio = 2/3)
     } else {
-      pelbow = ggplot2::ggplot(DD, ggplot2::aes_string(x='gamma', y='D')) + ggplot2::geom_path() +
-        ggplot2::geom_point(data = optim, mapping = ggplot2::aes_string(x='gamma', y='D'), col='red', size=3) +
-        ggplot2::annotate('text', x=optim$gamma, y=optim$D-0.05, label=optim$gamma, color='red', size = 3) +
+      pelbow = ggplot2::ggplot(DD, ggplot2::aes_string(x='gamma', y='DubRate')) + ggplot2::geom_path() +
+        ggplot2::geom_point(data = optim, mapping = ggplot2::aes_string(x='gamma', y='DubRate'), col='red', size=3) +
+        ggplot2::annotate('text', x=optim$gamma, y=optim$DubRate-0.05, label=optim$gamma, color='red', size = 3) +
         ggplot2::coord_cartesian(ylim = c(0,1), clip = 'off') +
         ggplot2::theme_light()+ ggplot2::theme(aspect.ratio = 2/3)
     }
@@ -749,9 +753,9 @@ mcRigor_tradeoff <- function(TabMC,
 
 
 
-#' @title mcRigor_buildmc
+#' @title To build an metacell object from the given metacell partitioning
 #'
-#' @description To build an metacell object from the given metacell partitioning (membership)
+#' @description To build an metacell object from the given metacell partitioning (sc_membership)
 #'
 #'
 #' @param obj_singlecell the Seurat object of single cells
@@ -988,7 +992,7 @@ mcRigor_buildmc <- function(obj_singlecell,
 
 
 
-#' @title mcRigor_covariate
+#' @title To assist metacell object building in determining the metacell covariates (metadata)
 #'
 #' @description To assist metacell object building in determining the metacell covariates (metadata)
 #'
@@ -1060,7 +1064,7 @@ mcRigor_covariate <- function(sc_covariate, sc_membership,
 
 
 
-#' @title mcRigor_purity
+#' @title To assist metacell object building in compute the purity of metacells with respect to each covariate
 #'
 #' @description To assist metacell object building in compute the purity of metacells with respect to each covariate
 #'
@@ -1128,7 +1132,7 @@ mcRigor_purity <- function(sc_covariate, sc_membership,
 
 
 
-#' @title mcRigor_projection
+#' @title To visualize a given metacell partitioning by projecting metacells onto the single cell embedding space.
 #'
 #' @description To visualize a given metacell partitioning by projecting metacells onto the single cell embedding space.
 #'
@@ -1147,10 +1151,7 @@ mcRigor_purity <- function(sc_covariate, sc_membership,
 #'
 #'
 #'
-#' @return a vector of metacell purity, which is defined as:
-#' - proportion of the most abundant covariate within metacell for \code{method = "max_proportion"} or
-#' - Shanon entropy for \code{method = "entropy"}.
-#' With 1 meaning that metacell consists of single cells from one covariate (reference assignment)
+#' @return a scatter plot of metacells projected to the single cell 2D embedding space.
 #'
 #' @export
 #'
@@ -1258,52 +1259,23 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
     ggplot2::geom_point(size=pt_size, alpha = sc.alpha) +
     ggplot2::guides(color = ggplot2::guide_legend(override.aes = list(size = 2)))
   
-  plegend = ggpubr::get_legend(ggplot2::ggplot(scCoord,
-                                               ggplot2::aes_string(colnames(scCoord)[dims[1]],
-                                                                   colnames(scCoord)[dims[2]],
-                                                                   color = color_field)) +
-                                 ggplot2::geom_point(size=pt_size, alpha = 1) +
-                                 ggplot2::guides(color = ggplot2::guide_legend(override.aes = list(size = 2))))
-  
-  if (!is.null(color_field) && !is.null(cpalette)) {
-    plegend = ggpubr::get_legend(ggplot2::ggplot(scCoord,
-                                                 ggplot2::aes_string(colnames(scCoord)[dims[1]],
-                                                                     colnames(scCoord)[dims[2]],
-                                                                     color = color_field)) +
-                                   ggplot2::geom_point(size=pt_size, alpha = 1) +
-                                   ggplot2::guides(color = ggplot2::guide_legend(override.aes = list(size = 2))) + 
-                                   ggplot2::scale_color_manual(values = cpalette))
-  }
-  
-  
-  
   if(continuous_metric){
     p <- p + 
       ggplot2::geom_point(data=centroids,
                           ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
                                               colnames(centroids)[1 + dims[2]],
                                               fill = color_field, size = metric),
-                          pch=21, color = 'black', stroke = 1, alpha = mc.alpha) +
+                          pch=21, color = 'black', stroke = 1, alpha = mc.alpha,
+                          show.legend = F) +
       ggplot2::scale_size_continuous(limits = c(1,max_mcsize), range = c(1,12))
     
-    # p <- p + 
-    #   ggplot2::geom_point(data=centroids,
-    #                              ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
-    #                                                  colnames(centroids)[1 + dims[2]],
-    #                                                  fill = color_field, size = metric),
-    #                              pch=16, alpha = mc.alpha) +
-    #   ggplot2::geom_point(data=centroids,
-    #                         ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
-    #                                             colnames(centroids)[1 + dims[2]],
-    #                                             size = metric), 
-    #                         pch=1, color = 'black', stroke = 2) + 
-    #   ggplot2::scale_size_continuous(limits = c(1,max_mcsize), range = c(1,12))
   }else{
     p <- p + ggplot2::geom_point(data=centroids, 
                                  ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
                                                      colnames(centroids)[1 + dims[2]],
                                                      fill = metric), 
-                                 pch=21, color = 'black', stroke = 1, alpha = mc.alpha) 
+                                 pch=21, color = 'black', stroke = 1, alpha = mc.alpha,
+                                 show.legend = F) 
   } 
   
   if (dub_mc.label){
@@ -1312,16 +1284,15 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
                           ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
                                               colnames(centroids)[1 + dims[2]],
                                               fill = color_field, size = metric),
-                          pch=21, color = 'red', stroke = 1.5, alpha = 1) +
-      ggplot2::scale_size_continuous(limits = c(1,max_mcsize), range = c(1,12))
-    # p <- p + ggplot2::geom_text(data = centroids, ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
-    #                                                                   colnames(centroids)[1 + dims[2]],
-    #                                                                   label = 'dub_mc'), color = 'black', size = 2)
+                          pch=21, color = 'red', stroke = 1.5, alpha = 1,
+                          show.legend = F) 
     
     if(label_text){
       p <- p + ggplot2::geom_text(data = centroids, ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
                                                                         colnames(centroids)[1 + dims[2]],
-                                                                        label = 'dub_mc'), color = 'black', size = 2)
+                                                                        label = 'dub_mc'), 
+                                  color = 'black', size = 2,
+                                  show.legend = F)
     }
   }
   
@@ -1331,13 +1302,15 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
                           ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
                                               colnames(centroids)[1 + dims[2]],
                                               fill = color_field, size = metric),
-                          pch=21, color = 'red', stroke = 1.5, alpha = 1) +
-      ggplot2::scale_size_continuous(limits = c(1,max_mcsize), range = c(1,12))
+                          pch=21, color = 'red', stroke = 1.5, alpha = 1,
+                          show.legend = F) 
     
     if(label_text){
       p <- p + ggplot2::geom_text(data = centroids, ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
                                                                         colnames(centroids)[1 + dims[2]],
-                                                                        label = 'dub_mc_test'), color = 'black', size = 2)
+                                                                        label = 'dub_mc_test'), 
+                                  color = 'black', size = 2,
+                                  show.legend = F)
     }
   }
   
@@ -1347,18 +1320,19 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
       ggplot2::scale_fill_manual(values = cpalette) +
       ggplot2::scale_color_manual(values = cpalette) +
       ggplot2::theme_bw() +
-      ggplot2::theme(legend.position = 'none', panel.grid = ggplot2::element_blank())
+      ggplot2::theme(panel.grid = ggplot2::element_blank())
   } else {
     p <- p +
       ggplot2::theme_bw() +
-      ggplot2::theme(legend.position = 'none', panel.grid = ggplot2::element_blank())
+      ggplot2::theme(panel.grid = ggplot2::element_blank())
   }
   
   if (!axis_lab) {
-    p <- p + ggplot2::theme(axis.ticks = ggplot2::element_blank(), axis.text = ggplot2::element_blank())
+    p <- p + ggplot2::theme(axis.ticks = ggplot2::element_blank(), 
+                            axis.text = ggplot2::element_blank())
   }
   
-  return(list(plot = p, legend = plegend))
+  return(p)
 }
 
 

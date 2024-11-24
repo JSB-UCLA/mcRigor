@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcRigor_function.R
 \name{mcRigor_DETECT}
 \alias{mcRigor_DETECT}
-\title{mcRigor_DETECT}
+\title{Main functionality 1: To detect dubious metacells for a given metacell partition}
 \usage{
 mcRigor_DETECT(
   obj_singlecell,
@@ -69,8 +69,8 @@ tgamma has to be in the column names of cell_membership. If tgamma = NULL, dubio
 }
 \value{
 A list containing the following fields: 
-\item{best_graining_level}{The optimal graining level selected by mcRigor}
-\item{opt_metacell}{The metacell object build under the optimal graining level}
+\item{mc_res}{A named vector indicating whether each metacll is dubious or trustworthy}
+\item{obj_metacell}{The metacell Seurat object with the mcRigor detection results in the metadata}
 \item{thre}{The thresholds for dubious metacell detection}
 \item{TabMC}{A dataframe containing the permutation results, elements to calculate the test statistics mcDiv and mcDiv null}
 \item{test_plot}{The scatter plots demonstrating the mcDiv values and the obtained thresholds for dubious metacell detection}

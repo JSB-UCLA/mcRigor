@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcRigor_function.R
 \name{mcRigor_covariate}
 \alias{mcRigor_covariate}
-\title{mcRigor_covariate}
+\title{To assist metacell object building in determining the metacell covariates (metadata)}
 \usage{
 mcRigor_covariate(
   sc_covariate,

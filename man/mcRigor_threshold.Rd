@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcRigor_function.R
 \name{mcRigor_threshold}
 \alias{mcRigor_threshold}
-\title{mcRigor_threshold}
+\title{A building block of the main functions. To derive the thresholds for detecting dubious metacells based on the output permutation results (TabMC)}
 \usage{
 mcRigor_threshold(
   TabMC,

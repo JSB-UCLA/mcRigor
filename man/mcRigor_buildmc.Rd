@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcRigor_function.R
 \name{mcRigor_buildmc}
 \alias{mcRigor_buildmc}
-\title{mcRigor_buildmc}
+\title{To build an metacell object from the given metacell partitioning}
 \usage{
 mcRigor_buildmc(
   obj_singlecell,
@@ -70,5 +70,5 @@ mcRigor_buildmc(
 a Seurat object of the metacells
 }
 \description{
-To build an metacell object from the given metacell partitioning (membership)
+To build an metacell object from the given metacell partitioning (sc_membership)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcRigor_function.R
 \name{mcRigor_OPTIMIZE}
 \alias{mcRigor_OPTIMIZE}
-\title{mcRigor_OPTIMIZE}
+\title{Main functionality 2: To select the optimal hyperparameter for metacell partitioning}
 \usage{
 mcRigor_OPTIMIZE(
   obj_singlecell,
@@ -80,8 +80,9 @@ The column names should be the corresponding gamma's. The row names should be th
 }
 \value{
 A list containing the following fields: 
-\item{best_graining_level}{The optimal graining level selected by mcRigor}
-\item{opt_metacell}{The metacell object build under the optimal graining level}
+\item{best_granularity_level}{The optimal granularity level selected by mcRigor}
+\item{best_Score}{The evaluation score for the metacell partition given by the optimal granularity level selected by mcRigor}
+\item{opt_metacell}{The metacell object build under the optimal granularity level}
 \item{scores}{A data frame containing the evaluation scores for each gamma}
 \item{optim_plot}{The line plot to visualize the tradeoff for hyperparameter opimization.}
 \item{thre}{The thresholds for dubious metacell detection}

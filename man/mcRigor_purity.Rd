@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcRigor_function.R
 \name{mcRigor_purity}
 \alias{mcRigor_purity}
-\title{mcRigor_purity}
+\title{To assist metacell object building in compute the purity of metacells with respect to each covariate}
 \usage{
 mcRigor_purity(
   sc_covariate,

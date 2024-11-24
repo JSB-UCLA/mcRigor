@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcRigor_function.R
 \name{mcRigor_tradeoff}
 \alias{mcRigor_tradeoff}
-\title{mcRigor_tradeoff}
+\title{A building block of the main functions. To evaluate each metacell partition and optimize metacell partitioning based on the output permutation results (TabMC) and thresholds (threshold)}
 \usage{
 mcRigor_tradeoff(
   TabMC,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/mcRigor_function.R
 \name{mcRigor_projection}
 \alias{mcRigor_projection}
-\title{mcRigor_projection}
+\title{To visualize a given metacell partitioning by projecting metacells onto the single cell embedding space.}
 \usage{
 mcRigor_projection(
   obj_singlecell,
@@ -51,10 +51,7 @@ mcRigor_projection(
 \item{color_field}{The variable based on which to color the cells.}
 }
 \value{
-a vector of metacell purity, which is defined as:
-- proportion of the most abundant covariate within metacell for \code{method = "max_proportion"} or
-- Shanon entropy for \code{method = "entropy"}.
-With 1 meaning that metacell consists of single cells from one covariate (reference assignment)
+a scatter plot of metacells projected to the single cell 2D embedding space.
 }
 \description{
 To visualize a given metacell partitioning by projecting metacells onto the single cell embedding space.
