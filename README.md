@@ -2,7 +2,7 @@
 
 The R package **mcRigor** is a statistical method to enhance the rigor of metacell partitioning in single-cell data analysis. It can be used as an add-on for any existing metacell partitioning methods for obtaining more reliable metacells. mcRigor has two main functionalities: 1) detecting dubious metacells, which are composed of heterogeneous single cells, for a given metacell partition, and 2) optimizing the hyperparameter of a metacell partitioning method. The core of mcRigor is a feature-correlation-based statistic that measures the heterogeneity of a metacell, with its null distribution derived from a double permutation scheme. The following figure illustrates the schematics of mcRigor for dubious metacell detection (a) and hyperparameter optimization (b).
 
-<img src="man/figures/mcRigor_illustration.png" width="600"/>
+<img src="man/figures/mcRigor_illustration.png" width="750"/>
 
 
 ## Installation<a name="installation-"></a>
@@ -81,15 +81,15 @@ plot = mcRigor_projection(obj_singlecell = obj_singlecell, sc_membership = sc_me
                            dub_mc_test.label = T, test_stats = optimize_res$TabMC, Thre = optimize_res$thre)
 plot
 ```
-<img src="man/figures/mcRigor_projection.png" width="600"/>
+<img src="man/figures/mcRigor_projection.png" width="750"/>
 
 
 ## Tutorials<a name="tutorials"></a>
 
-For all detailed tutorials, please check the [website](https://JSB-UCLA.github.io/mcRigor/index.html). The tutorials will demonstrate the two main functionalities of **mcRigor** on a semi-synthetic dataset of bone marrow mononuclear cells measured by CITE-seq.
+For all detailed tutorials, please check the [website](https://jsb-ucla.github.io/mcRigor/index.html). The tutorials will demonstrate the two main functionalities of **mcRigor** on a semi-synthetic dataset of bone marrow mononuclear cells measured by CITE-seq.
 
--   [Functionality 1: detect dubious metacells for a given metacell partition](https://JSB-UCLA.github.io/mcRigor/articles/mcRigor-detect-dubmc.html)
--   [Functionality 2: optimize metacell partitioning](https://JSB-UCLA.github.io/mcRigor/articles/mcRigor-optimize.html)
+-   [Functionality 1: detect dubious metacells for a given metacell partition](https://jsb-ucla.github.io/mcRigor/articles/mcRigor-detect-dubmc.html)
+-   [Functionality 2: optimize metacell partitioning](https://jsb-ucla.github.io/mcRigor/articles/mcRigor-optimize.html)
 
 
 

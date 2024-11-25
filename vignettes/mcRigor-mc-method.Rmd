@@ -1,0 +1,20 @@
+---
+title: "Implementing metacell partitioning methods"
+author: "Pan Liu"
+output: 
+  BiocStyle::html_document:
+    self_contained: yes
+    toc: true
+    toc_float: true
+    toc_depth: 2
+    code_folding: show
+date: "`r doc_date()`"
+package: "`r pkg_ver('mcRigor')`"
+vignette: >
+  %\VignetteIndexEntry{mcRigor-detect-dubmc}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}  
+---
+
+
+**This page is under construction. Please check back soon!**

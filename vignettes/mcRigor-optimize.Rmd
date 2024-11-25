@@ -33,7 +33,7 @@ library(ggplot2)
 
 ## Introduction
 
-In this tutorial, we will show how to use mcRigor to evaluate each metacell partition and select the optimal granularity level for a specific metacell partitioning method. Note that granularity level, $\gamma$, is a key parameter for metacell partitioning defined as the ratio of the number of single cells to the number of metacells, and decent selection of it is of vital importance to ensure the unbiasedness of the metacell profiles and the reliability fo the downstream analysis. We will demonstrate this functionality of mcRigor on a semi-synthetic single cell RNA sequencing (scRNA-seq) dataset with known trustworthiness of metacells and optimal metacell partition.
+In this tutorial, we will show how to use mcRigor to evaluate each metacell partition and select the **optimal granularity level** for a specific metacell partitioning method. Note that granularity level, $\gamma$, is a key parameter for metacell partitioning defined as the ratio of the number of single cells to the number of metacells, and decent selection of it is of vital importance to ensure the unbiasedness of the metacell profiles and the reliability fo the downstream analysis. We will demonstrate this functionality of mcRigor on a semi-synthetic single cell RNA sequencing (scRNA-seq) dataset with known trustworthiness of metacells and optimal metacell partition.
 
 ## Input preparation
 
@@ -55,7 +55,7 @@ cell_membership[1:3,1:3]
 
 We call the function `mcRigor_OPTIMIZE` to evaluate each metacell partition in `cell_membership` and select the optimal one among them.
 ```{r, results='hide'}
-optimize_res = mcRigor_OPTIMIZE(obj_singlecell = obj_singlecell, cell_membership = cell_membership[as.character(c(50:51))])
+optimize_res = mcRigor_OPTIMIZE(obj_singlecell = obj_singlecell, cell_membership = cell_membership)
 ```
 The evaluation scores for the provided metacell partitions are stored in the `score` field of the output `optimize_res`, and we can draw the line plot of the evaluation scores.
 ```{r}
