@@ -14,3 +14,4 @@ LinkingTo: Rcpp, RcppEigen
 RoxygenNote: 7.2.3
 Depends: 
     R (>= 4.0.0)
+URL: https://jsb-ucla.github.io/mcRigor/
