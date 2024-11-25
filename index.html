@@ -36,6 +36,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/mcRigor-detect-dubmc.html">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
+    <li><a class="dropdown-item" href="articles/mcRigor-mc-method.html">Implementing metacell partitioning methods</a></li>
     <li><a class="dropdown-item" href="articles/mcRigor-optimize.html">Functionality 2: optimize metacell partitioning</a></li>
   </ul>
 </li>
@@ -55,7 +56,7 @@
 <div class="page-header"><h1 id="mcrigor">mcRigor<a class="anchor" aria-label="anchor" href="#mcrigor"></a>
 </h1></div>
 <p>The R package <strong>mcRigor</strong> is a statistical method to enhance the rigor of metacell partitioning in single-cell data analysis. It can be used as an add-on for any existing metacell partitioning methods for obtaining more reliable metacells. mcRigor has two main functionalities: 1) detecting dubious metacells, which are composed of heterogeneous single cells, for a given metacell partition, and 2) optimizing the hyperparameter of a metacell partitioning method. The core of mcRigor is a feature-correlation-based statistic that measures the heterogeneity of a metacell, with its null distribution derived from a double permutation scheme. The following figure illustrates the schematics of mcRigor for dubious metacell detection (a) and hyperparameter optimization (b).</p>
-<p><img src="reference/figures/mcRigor_illustration.png" width="600"></p>
+<p><img src="reference/figures/mcRigor_illustration.png" width="750"></p>
 <div class="section level2">
 <h2 id="installation">Installation<a name="installation-"></a>
 <a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -109,16 +110,16 @@
 <span>                           color_field <span class="op">=</span> <span class="st">'celltype.l1'</span>,</span>
 <span>                           dub_mc_test.label <span class="op">=</span> <span class="cn">T</span>, test_stats <span class="op">=</span> <span class="va">optimize_res</span><span class="op">$</span><span class="va">TabMC</span>, Thre <span class="op">=</span> <span class="va">optimize_res</span><span class="op">$</span><span class="va">thre</span><span class="op">)</span></span>
 <span><span class="va">plot</span></span></code></pre></div>
-<p><img src="reference/figures/mcRigor_projection.png" width="600"></p>
+<p><img src="reference/figures/mcRigor_projection.png" width="750"></p>
 </div>
 <div class="section level2">
 <h2 id="tutorials">Tutorials<a name="tutorials"></a>
 <a class="anchor" aria-label="anchor" href="#tutorials"></a>
 </h2>
-<p>For all detailed tutorials, please check the <a href="https://JSB-UCLA.github.io/mcRigor/index.html" class="external-link">website</a>. The tutorials will demonstrate the two main functionalities of <strong>mcRigor</strong> on a semi-synthetic dataset of bone marrow mononuclear cells measured by CITE-seq.</p>
+<p>For all detailed tutorials, please check the <a href="https://jsb-ucla.github.io/mcRigor/index.html">website</a>. The tutorials will demonstrate the two main functionalities of <strong>mcRigor</strong> on a semi-synthetic dataset of bone marrow mononuclear cells measured by CITE-seq.</p>
 <ul>
-<li><a href="https://JSB-UCLA.github.io/mcRigor/articles/mcRigor-detect-dubmc.html" class="external-link">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
-<li><a href="https://JSB-UCLA.github.io/mcRigor/articles/mcRigor-optimize.html" class="external-link">Functionality 2: optimize metacell partitioning</a></li>
+<li><a href="https://jsb-ucla.github.io/mcRigor/articles/mcRigor-detect-dubmc.html">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
+<li><a href="https://jsb-ucla.github.io/mcRigor/articles/mcRigor-optimize.html">Functionality 2: optimize metacell partitioning</a></li>
 </ul>
 </div>
 <div class="section level2">

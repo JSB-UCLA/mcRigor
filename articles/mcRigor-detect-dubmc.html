@@ -34,6 +34,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/mcRigor-detect-dubmc.html">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
+    <li><a class="dropdown-item" href="../articles/mcRigor-mc-method.html">Implementing metacell partitioning methods</a></li>
     <li><a class="dropdown-item" href="../articles/mcRigor-optimize.html">Functionality 2: optimize metacell partitioning</a></li>
   </ul>
 </li>
@@ -147,7 +148,7 @@ well as the metadata of the Seurat object with name
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">detect_res</span><span class="op">$</span><span class="va">mc_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     dubious trustworthy </span></span>
-<span><span class="co">#&gt;          63         205</span></span>
+<span><span class="co">#&gt;          56         212</span></span>
 <span><span class="va">obj_metacell</span> <span class="op">=</span> <span class="va">detect_res</span><span class="op">$</span><span class="va">obj_metacell</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">obj_metacell</span><span class="op">$</span><span class="va">mcRigor</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   mc50-allcells-SEACell-0   mc50-allcells-SEACell-1  mc50-allcells-SEACell-10 </span></span>

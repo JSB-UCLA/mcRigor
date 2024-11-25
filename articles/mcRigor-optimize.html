@@ -34,6 +34,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/mcRigor-detect-dubmc.html">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
+    <li><a class="dropdown-item" href="../articles/mcRigor-mc-method.html">Implementing metacell partitioning methods</a></li>
     <li><a class="dropdown-item" href="../articles/mcRigor-optimize.html">Functionality 2: optimize metacell partitioning</a></li>
   </ul>
 </li>
@@ -75,8 +76,9 @@
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
 <p>In this tutorial, we will show how to use mcRigor to evaluate each
-metacell partition and select the optimal granularity level for a
-specific metacell partitioning method. Note that granularity level,
+metacell partition and select the <strong>optimal granularity
+level</strong> for a specific metacell partitioning method. Note that
+granularity level,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>,
 is a key parameter for metacell partitioning defined as the ratio of the
 number of single cells to the number of metacells, and decent selection
@@ -140,15 +142,19 @@ mcRigor package as an example.</p>
 metacell partition in <code>cell_membership</code> and select the
 optimal one among them.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">optimize_res</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcRigor_OPTIMIZE.html">mcRigor_OPTIMIZE</a></span><span class="op">(</span>obj_singlecell <span class="op">=</span> <span class="va">obj_singlecell</span>, cell_membership <span class="op">=</span> <span class="va">cell_membership</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span><span class="op">:</span><span class="fl">51</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">optimize_res</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcRigor_OPTIMIZE.html">mcRigor_OPTIMIZE</a></span><span class="op">(</span>obj_singlecell <span class="op">=</span> <span class="va">obj_singlecell</span>, cell_membership <span class="op">=</span> <span class="va">cell_membership</span><span class="op">)</span></span></code></pre></div>
 <p>The evaluation scores for the provided metacell partitions are stored
 in the <code>score</code> field of the output <code>optimize_res</code>,
 and we can draw the line plot of the evaluation scores.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">optimize_res</span><span class="op">$</span><span class="va">scores</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   gamma   DubRate  ZeroRate     Score</span></span>
-<span><span class="co">#&gt; 1    50 0.2229851 0.6251194 0.5759478</span></span>
-<span><span class="co">#&gt; 2    51 0.1872388 0.6198080 0.5964766</span></span>
+<span><span class="co">#&gt;   gamma    DubRate  ZeroRate     Score</span></span>
+<span><span class="co">#&gt; 1     2 0.01137782 0.9201214 0.5342504</span></span>
+<span><span class="co">#&gt; 2     3 0.01211045 0.9021871 0.5428512</span></span>
+<span><span class="co">#&gt; 3     4 0.01278217 0.8864460 0.5503859</span></span>
+<span><span class="co">#&gt; 4     6 0.01406138 0.8618650 0.5620368</span></span>
+<span><span class="co">#&gt; 5     7 0.01430996 0.8507913 0.5674494</span></span>
+<span><span class="co">#&gt; 6     8 0.01433865 0.8412219 0.5722197</span></span>
 <span><span class="va">optimize_res</span><span class="op">$</span><span class="va">optim_plot</span></span></code></pre></div>
 <p><img src="mcRigor-optimize_files/figure-html/unnamed-chunk-5-1.png" width="700">
 The output <code>optimize_res</code> contains the optimal granularity
@@ -160,7 +166,7 @@ under the the optimal granularity level (<code>opt_metacell</code>).</p>
 <code class="sourceCode R"><span><span class="va">opt_metacell</span> <span class="op">=</span> <span class="va">optimize_res</span><span class="op">$</span><span class="va">opt_metacell</span></span>
 <span><span class="va">opt_metacell</span></span>
 <span><span class="co">#&gt; An object of class Seurat </span></span>
-<span><span class="co">#&gt; 2000 features across 263 samples within 1 assay </span></span>
+<span><span class="co">#&gt; 2000 features across 319 samples within 1 assay </span></span>
 <span><span class="co">#&gt; Active assay: RNA (2000 features, 0 variable features)</span></span>
 <span><span class="co">#&gt;  2 layers present: counts, data</span></span></code></pre></div>
 <p>Note the optimal metacell partition may still contain dubious
