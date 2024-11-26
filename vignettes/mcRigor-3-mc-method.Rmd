@@ -11,7 +11,7 @@ output:
 date: "`r doc_date()`"
 package: "`r pkg_ver('mcRigor')`"
 vignette: >
-  %\VignetteIndexEntry{mcRigor-detect-dubmc}
+  %\VignetteIndexEntry{mcRigor-3-mc-method}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}  
 ---

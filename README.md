@@ -19,6 +19,7 @@ devtools::install_github("JSB-UCLA/mcRigor")
 ## Quick Start<a name="quick-start"></a>
 
 The following code demonstrates how to implement the two main functionalities of **mcRigor** using its corresponding functions: `mcRigor_DETECT` and `mcRigor_OPTIMIZE`. For both functions, the input data should include:
+
 - A Seurat object containing the raw single cell sequencing data.
 - A dataframe specifying the metacell partitions to rectify or optimize.
 
@@ -34,6 +35,7 @@ cell_membership <- cell_membership_all['50']  # A dataframe containing one metac
 ```
 
 We implement the first functionality: **detecting dubious metacells**.
+
 ``` r
 detect_res = mcRigor_DETECT(obj_singlecell = obj_singlecell, 
                             cell_membership = cell_membership,
@@ -47,7 +49,9 @@ detect_res = mcRigor_DETECT(obj_singlecell = obj_singlecell,
                             thre_bw = 1/6)
 detect_res$mc_res
 ```
+
 The arguments of `mcRigor_DETECT()` include:
+
 - `obj_singlecell`: A Seurat object of the original single cell sequencing data.
 - `cell_membership`: A dataframe, each column of which contains the metacell membership of single cells under a given $\gamma$ (granularity level). The column names should be the corresponding $\gamma$'s (in the character type). The row names should be the single cell ids.
 - `tgamma`: An integer ofthe target $\gamma$ value --- the $\gamma$ (in the character type) corresponding to the metacell partition where dubious metacells detection will be performed. tgamma has to be in the column names of cell_membership. If tgamma = NULL, dubious metacells detection will be performed on the metacell partition represented by the first column of cell_membership. Default is NULL.
@@ -62,14 +66,18 @@ The arguments of `mcRigor_DETECT()` include:
 The mcRigor detection results, indicating whether each metacell is classified as dubious or trustworthy, are stored in the `mc_res` field of the output object `detect_res`.
 
 We implement the second functionality: **optimizing the hyperparameter** of a metacell partitioning method. We use SEACells as an example here.
+
 ``` r
-optimize_res = mcRigor_OPTIMIZE(obj_singlecell = obj_singlecell, cell_membership = cell_membership)
+optimize_res = mcRigor_OPTIMIZE(obj_singlecell = obj_singlecell, cell_membership = cell_membership_all)
 ```
+
 Besides the arguments of `mcRigor_DETECT()`, `mcRigor_OPTIMIZE()` has one additional argument:
+
 - `Gammas`: A vector of integers or characters to specify the candidate pool of granularity levels to consider in optimization. Default is NULL, which means all the granularity levels in `cell_membership` will be considered.
 - `weight`: A float between 0 and 1, which sepcifies the weight for dubious rate in the tradeoff for metacell partition evaluation. Default is 0.5.
 
 The output `optimize_res` contains the optimal granularity level (`best_granularity_level`) and the Seurat object of metacells generated under the the optimal granularity level (`opt_metacell`). We can visualize the optimal metacell partition using function  `mcRigor_projection`, with the metacells projected to the two-dimensional embedding space of single cells and the detected dubious metacells marked by red circles
+
 ``` r
 opt_metacell = optimize_res$opt_metacell
 
@@ -81,15 +89,16 @@ plot = mcRigor_projection(obj_singlecell = obj_singlecell, sc_membership = sc_me
                            dub_mc_test.label = T, test_stats = optimize_res$TabMC, Thre = optimize_res$thre)
 plot
 ```
-<img src="man/figures/mcRigor_projection.png" width="750"/>
+
+<img src="man/figures/mcRigor_projection.png" width="600"/>
 
 
 ## Tutorials<a name="tutorials"></a>
 
 For all detailed tutorials, please check the [website](https://jsb-ucla.github.io/mcRigor/index.html). The tutorials will demonstrate the two main functionalities of **mcRigor** on a semi-synthetic dataset of bone marrow mononuclear cells measured by CITE-seq.
 
--   [Functionality 1: detect dubious metacells for a given metacell partition](https://jsb-ucla.github.io/mcRigor/articles/mcRigor-detect-dubmc.html)
--   [Functionality 2: optimize metacell partitioning](https://jsb-ucla.github.io/mcRigor/articles/mcRigor-optimize.html)
+-   [Functionality 1: detect dubious metacells for a given metacell partition](https://jsb-ucla.github.io/mcRigor/articles/mcRigor-1-detect-dubmc.html)
+-   [Functionality 2: optimize metacell partitioning](https://jsb-ucla.github.io/mcRigor/articles/mcRigor-2-optimize.html)
 
 
 
