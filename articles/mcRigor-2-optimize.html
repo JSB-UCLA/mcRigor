@@ -148,13 +148,13 @@ in the <code>score</code> field of the output <code>optimize_res</code>,
 and we can draw the line plot of the evaluation scores.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">optimize_res</span><span class="op">$</span><span class="va">scores</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   gamma     DubRate  ZeroRate     Score</span></span>
-<span><span class="co">#&gt; 1     2 0.009748091 0.9201214 0.5350652</span></span>
-<span><span class="co">#&gt; 2     3 0.010663976 0.9021871 0.5435744</span></span>
-<span><span class="co">#&gt; 3     4 0.011518550 0.8864460 0.5510177</span></span>
-<span><span class="co">#&gt; 4     6 0.013164519 0.8618650 0.5624852</span></span>
-<span><span class="co">#&gt; 5     7 0.013743000 0.8507913 0.5677329</span></span>
-<span><span class="co">#&gt; 6     8 0.014065972 0.8412219 0.5723561</span></span>
+<span><span class="co">#&gt;   gamma    DubRate  ZeroRate     Score</span></span>
+<span><span class="co">#&gt; 1     2 0.01106557 0.9201214 0.5344065</span></span>
+<span><span class="co">#&gt; 2     3 0.01193333 0.9021871 0.5429398</span></span>
+<span><span class="co">#&gt; 3     4 0.01272903 0.8864460 0.5504125</span></span>
+<span><span class="co">#&gt; 4     6 0.01418433 0.8618650 0.5619753</span></span>
+<span><span class="co">#&gt; 5     7 0.01459026 0.8507913 0.5673092</span></span>
+<span><span class="co">#&gt; 6     8 0.01466195 0.8412219 0.5720581</span></span>
 <span><span class="va">optimize_res</span><span class="op">$</span><span class="va">optim_plot</span></span></code></pre></div>
 <p><img src="mcRigor-2-optimize_files/figure-html/unnamed-chunk-5-1.png" width="700"></p>
 <p>The output <code>optimize_res</code> contains the optimal granularity
