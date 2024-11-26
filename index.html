@@ -35,9 +35,9 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/mcRigor-detect-dubmc.html">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
-    <li><a class="dropdown-item" href="articles/mcRigor-mc-method.html">Implementing metacell partitioning methods</a></li>
-    <li><a class="dropdown-item" href="articles/mcRigor-optimize.html">Functionality 2: optimize metacell partitioning</a></li>
+<li><a class="dropdown-item" href="articles/mcRigor-1-detect-dubmc.html">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
+    <li><a class="dropdown-item" href="articles/mcRigor-2-optimize.html">Functionality 2: optimize metacell partitioning</a></li>
+    <li><a class="dropdown-item" href="articles/mcRigor-3-mc-method.html">Implementing metacell partitioning methods</a></li>
   </ul>
 </li>
       </ul>
@@ -71,7 +71,11 @@
 <h2 id="quick-start">Quick Start<a name="quick-start"></a>
 <a class="anchor" aria-label="anchor" href="#quick-start"></a>
 </h2>
-<p>The following code demonstrates how to implement the two main functionalities of <strong>mcRigor</strong> using its corresponding functions: <code>mcRigor_DETECT</code> and <code>mcRigor_OPTIMIZE</code>. For both functions, the input data should include: - A Seurat object containing the raw single cell sequencing data. - A dataframe specifying the metacell partitions to rectify or optimize.</p>
+<p>The following code demonstrates how to implement the two main functionalities of <strong>mcRigor</strong> using its corresponding functions: <code>mcRigor_DETECT</code> and <code>mcRigor_OPTIMIZE</code>. For both functions, the input data should include:</p>
+<ul>
+<li>A Seurat object containing the raw single cell sequencing data.</li>
+<li>A dataframe specifying the metacell partitions to rectify or optimize.</li>
+</ul>
 <p>An important difference between the two functions lies in their requirements of the second input: <code>mcRigor_DETECT</code> requires only a single metacell partition as input since its purpose is to detect dubious metacells within the given partition, while <code>mcRigor_OPTIMIZE</code> requires a series of metacell partitions as input since its goal is to identify the optimal partition from the provided candidates. Note that the metacell partitions can be obtained using existing metacell partitioning methods (e.g., SEACells, MetaCell, MetaCell2, SuperCell) or ad-hoc approaches. An example input is as below:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_dir</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">'extdata'</span>, <span class="st">'syn.rds'</span>, package <span class="op">=</span> <span class="st">'mcRigor'</span><span class="op">)</span></span>
@@ -93,12 +97,40 @@
 <span>                            thre_smooth <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>                            thre_bw <span class="op">=</span> <span class="fl">1</span><span class="op">/</span><span class="fl">6</span><span class="op">)</span></span>
 <span><span class="va">detect_res</span><span class="op">$</span><span class="va">mc_res</span></span></code></pre></div>
-<p>The arguments of <code><a href="reference/mcRigor_DETECT.html">mcRigor_DETECT()</a></code> include: - <code>obj_singlecell</code>: A Seurat object of the original single cell sequencing data. - <code>cell_membership</code>: A dataframe, each column of which contains the metacell membership of single cells under a given <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math> (granularity level). The column names should be the corresponding <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>’s (in the character type). The row names should be the single cell ids. - <code>tgamma</code>: An integer ofthe target <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math> value — the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math> (in the character type) corresponding to the metacell partition where dubious metacells detection will be performed. tgamma has to be in the column names of cell_membership. If tgamma = NULL, dubious metacells detection will be performed on the metacell partition represented by the first column of cell_membership. Default is NULL. - <code>assay_type</code>: A charater of the type of data assay you are using (‘RNA’ or ‘ATAC’), depending on which different normalization would be used. Default is ‘RNA’. - <code>feature_use</code>: An integer of the number of genes to use in metacell testing. Default is 2000. - <code>aggregate_method</code>: A character of the method to aggregate single cell profiles into metacell profiles. Default is ‘mean’, which means the metacell expression is computed as the mean of the single cell expression within. - <code>Nrep</code>: An integer of the number of permutation repetitions we use when deriving the null. Default is 1. - <code>test_cutoff</code>: A float of the test size for dubious metacell detection testing. Default is 0.05. - <code>thre_smooth</code>: A boolean indicating whether to smooth the threshold function (lowess smoothing). Default is TRUE. - <code>thre_bw</code>: A float. If thre_smooth is True, thre_bw specifies the bandwidth for smoothing. Default is 1/6.</p>
+<p>The arguments of <code><a href="reference/mcRigor_DETECT.html">mcRigor_DETECT()</a></code> include:</p>
+<ul>
+<li>
+<code>obj_singlecell</code>: A Seurat object of the original single cell sequencing data.</li>
+<li>
+<code>cell_membership</code>: A dataframe, each column of which contains the metacell membership of single cells under a given <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math> (granularity level). The column names should be the corresponding <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math>’s (in the character type). The row names should be the single cell ids.</li>
+<li>
+<code>tgamma</code>: An integer ofthe target <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math> value — the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>γ</mi><annotation encoding="application/x-tex">\gamma</annotation></semantics></math> (in the character type) corresponding to the metacell partition where dubious metacells detection will be performed. tgamma has to be in the column names of cell_membership. If tgamma = NULL, dubious metacells detection will be performed on the metacell partition represented by the first column of cell_membership. Default is NULL.</li>
+<li>
+<code>assay_type</code>: A charater of the type of data assay you are using (‘RNA’ or ‘ATAC’), depending on which different normalization would be used. Default is ‘RNA’.</li>
+<li>
+<code>feature_use</code>: An integer of the number of genes to use in metacell testing. Default is 2000.</li>
+<li>
+<code>aggregate_method</code>: A character of the method to aggregate single cell profiles into metacell profiles. Default is ‘mean’, which means the metacell expression is computed as the mean of the single cell expression within.</li>
+<li>
+<code>Nrep</code>: An integer of the number of permutation repetitions we use when deriving the null. Default is 1.</li>
+<li>
+<code>test_cutoff</code>: A float of the test size for dubious metacell detection testing. Default is 0.05.</li>
+<li>
+<code>thre_smooth</code>: A boolean indicating whether to smooth the threshold function (lowess smoothing). Default is TRUE.</li>
+<li>
+<code>thre_bw</code>: A float. If thre_smooth is True, thre_bw specifies the bandwidth for smoothing. Default is 1/6.</li>
+</ul>
 <p>The mcRigor detection results, indicating whether each metacell is classified as dubious or trustworthy, are stored in the <code>mc_res</code> field of the output object <code>detect_res</code>.</p>
 <p>We implement the second functionality: <strong>optimizing the hyperparameter</strong> of a metacell partitioning method. We use SEACells as an example here.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">optimize_res</span> <span class="op">=</span> <span class="fu"><a href="reference/mcRigor_OPTIMIZE.html">mcRigor_OPTIMIZE</a></span><span class="op">(</span>obj_singlecell <span class="op">=</span> <span class="va">obj_singlecell</span>, cell_membership <span class="op">=</span> <span class="va">cell_membership</span><span class="op">)</span></span></code></pre></div>
-<p>Besides the arguments of <code><a href="reference/mcRigor_DETECT.html">mcRigor_DETECT()</a></code>, <code><a href="reference/mcRigor_OPTIMIZE.html">mcRigor_OPTIMIZE()</a></code> has one additional argument: - <code>Gammas</code>: A vector of integers or characters to specify the candidate pool of granularity levels to consider in optimization. Default is NULL, which means all the granularity levels in <code>cell_membership</code> will be considered. - <code>weight</code>: A float between 0 and 1, which sepcifies the weight for dubious rate in the tradeoff for metacell partition evaluation. Default is 0.5.</p>
+<code class="sourceCode R"><span><span class="va">optimize_res</span> <span class="op">=</span> <span class="fu"><a href="reference/mcRigor_OPTIMIZE.html">mcRigor_OPTIMIZE</a></span><span class="op">(</span>obj_singlecell <span class="op">=</span> <span class="va">obj_singlecell</span>, cell_membership <span class="op">=</span> <span class="va">cell_membership_all</span><span class="op">)</span></span></code></pre></div>
+<p>Besides the arguments of <code><a href="reference/mcRigor_DETECT.html">mcRigor_DETECT()</a></code>, <code><a href="reference/mcRigor_OPTIMIZE.html">mcRigor_OPTIMIZE()</a></code> has one additional argument:</p>
+<ul>
+<li>
+<code>Gammas</code>: A vector of integers or characters to specify the candidate pool of granularity levels to consider in optimization. Default is NULL, which means all the granularity levels in <code>cell_membership</code> will be considered.</li>
+<li>
+<code>weight</code>: A float between 0 and 1, which sepcifies the weight for dubious rate in the tradeoff for metacell partition evaluation. Default is 0.5.</li>
+</ul>
 <p>The output <code>optimize_res</code> contains the optimal granularity level (<code>best_granularity_level</code>) and the Seurat object of metacells generated under the the optimal granularity level (<code>opt_metacell</code>). We can visualize the optimal metacell partition using function <code>mcRigor_projection</code>, with the metacells projected to the two-dimensional embedding space of single cells and the detected dubious metacells marked by red circles</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">opt_metacell</span> <span class="op">=</span> <span class="va">optimize_res</span><span class="op">$</span><span class="va">opt_metacell</span></span>
@@ -110,7 +142,7 @@
 <span>                           color_field <span class="op">=</span> <span class="st">'celltype.l1'</span>,</span>
 <span>                           dub_mc_test.label <span class="op">=</span> <span class="cn">T</span>, test_stats <span class="op">=</span> <span class="va">optimize_res</span><span class="op">$</span><span class="va">TabMC</span>, Thre <span class="op">=</span> <span class="va">optimize_res</span><span class="op">$</span><span class="va">thre</span><span class="op">)</span></span>
 <span><span class="va">plot</span></span></code></pre></div>
-<p><img src="reference/figures/mcRigor_projection.png" width="750"></p>
+<p><img src="reference/figures/mcRigor_projection.png" width="600"></p>
 </div>
 <div class="section level2">
 <h2 id="tutorials">Tutorials<a name="tutorials"></a>
@@ -118,8 +150,8 @@
 </h2>
 <p>For all detailed tutorials, please check the <a href="https://jsb-ucla.github.io/mcRigor/index.html">website</a>. The tutorials will demonstrate the two main functionalities of <strong>mcRigor</strong> on a semi-synthetic dataset of bone marrow mononuclear cells measured by CITE-seq.</p>
 <ul>
-<li><a href="https://jsb-ucla.github.io/mcRigor/articles/mcRigor-detect-dubmc.html">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
-<li><a href="https://jsb-ucla.github.io/mcRigor/articles/mcRigor-optimize.html">Functionality 2: optimize metacell partitioning</a></li>
+<li><a href="https://jsb-ucla.github.io/mcRigor/articles/mcRigor-1-detect-dubmc.html">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
+<li><a href="https://jsb-ucla.github.io/mcRigor/articles/mcRigor-2-optimize.html">Functionality 2: optimize metacell partitioning</a></li>
 </ul>
 </div>
 <div class="section level2">
