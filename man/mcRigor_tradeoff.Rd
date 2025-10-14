@@ -6,7 +6,7 @@
 \usage{
 mcRigor_tradeoff(
   TabMC,
-  threshold,
+  threshold = NULL,
   D_bw = 10,
   optim_method = c("tradeoff", "dub_rate_large", "dub_rate_small"),
   dub_rate = 0.1,

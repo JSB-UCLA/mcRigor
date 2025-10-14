@@ -1,4 +1,6 @@
 #include <RcppEigen.h>
+#include <algorithm>   // for std::shuffle
+#include <random>      // for std::mt19937
 // [[Rcpp::depends(RcppEigen)]]
 
 using namespace Rcpp;
@@ -19,9 +21,16 @@ double mc_indpd_stats_cpp(const Eigen::MatrixXd &dat) {
 // [[Rcpp::export]]
 Eigen::MatrixXd colwise_perm_cpp(const Eigen::MatrixXd &dat) {
   Eigen::MatrixXd dat_perm = dat;
+  
+  Rcpp::RNGScope scope;
+  std::mt19937 rng(static_cast<uint32_t>(R::unif_rand() * 4294967295.0));
+
   for (int j = 0; j < dat.cols(); ++j) {
-    std::random_shuffle(dat_perm.col(j).data(), dat_perm.col(j).data() + dat_perm.rows());
+    std::shuffle(dat_perm.col(j).data(),
+                 dat_perm.col(j).data() + dat_perm.rows(),
+                 rng);
   }
+  
   return dat_perm;
 }
 
@@ -30,8 +39,14 @@ Eigen::MatrixXd colwise_perm_cpp(const Eigen::MatrixXd &dat) {
 // [[Rcpp::export]]
 Eigen::MatrixXd rowwise_perm_cpp(const Eigen::MatrixXd &dat) {
   Eigen::MatrixXd dat_perm = dat.transpose();
+  
+  Rcpp::RNGScope scope;
+  std::mt19937 rng(static_cast<uint32_t>(R::unif_rand() * 4294967295.0));
+  
   for (int i = 0; i < dat.rows(); ++i) {
-    std::random_shuffle(dat_perm.col(i).data(), dat_perm.col(i).data() + dat_perm.rows());
+    std::shuffle(dat_perm.col(i).data(),
+                 dat_perm.col(i).data() + dat_perm.rows(),
+                 rng);
   }
   return dat_perm.transpose();
 }

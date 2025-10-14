@@ -39,7 +39,7 @@
 #' \item{test_plot}{The scatter plots demonstrating the mcDiv values and the obtained thresholds for dubious metacell detection}
 #' \item{purity_plot}{A violin plot showing the purity distribution of the pur_metric covariate in dubious metacells and trustworthy metacells}
 #'
-
+#' @export
 
 #
 mcRigor_DETECT <- function(obj_singlecell, 
@@ -272,7 +272,7 @@ mcRigor_DETECT <- function(obj_singlecell,
 #' \item{thre}{The thresholds for dubious metacell detection}
 #' \item{TabMC}{A dataframe containing the permutation results, elements to calculate the test statistics mcDiv and mcDiv null}
 #'
-
+#' @export
 
 #
 mcRigor_OPTIMIZE <- function(obj_singlecell, 
@@ -508,7 +508,7 @@ mcRigor_OPTIMIZE <- function(obj_singlecell,
 #' \item{test_plot}{The scatter plots demonstrating the mcDiv values and the obtained thresholds for dubious metacell detection}
 #' \item{purity_plot}{A violin plot showing the purity distribution of the pur_metric covariate in dubious metacells and trustworthy metacells}
 #'
-
+#' @export
 
 mcRigor_threshold <- function(TabMC, 
                               test_cutoff = 0.01, 
@@ -544,6 +544,7 @@ mcRigor_threshold <- function(TabMC,
     ymin = min(min(TabMC$TT_div), min(TabMC$depctr_TT_div))
     ymax = max(max(TabMC$TT_div), max(TabMC$depctr_TT_div))
     
+    .silence_lifecycle({
     p1 = ggplot2::ggplot(TabMC, ggplot2::aes_string(x='size', y='depctr_TT_div')) +
       ggplot2::geom_point(mapping = ggplot2::aes_string(color=pur_metric), alpha=palpha, col = null_color) + 
       # ggplot2::scale_color_gradientn(name=pur_metric, limits = c(pur_min, 1), colors = org_color) +
@@ -552,7 +553,9 @@ mcRigor_threshold <- function(TabMC,
       ggplot2::ylim(c(ymin, ymax)) +
       # ggplot2::ylim(c(0.95, 1.6)) +
       ggplot2::xlim(c(0, min(max(TabMC$size), 500)))
+    })
     
+    .silence_lifecycle({
     p2 = ggplot2::ggplot(TabMC, ggplot2::aes_string(x='size', y='TT_div')) +
       ggplot2::geom_point(mapping = ggplot2::aes_string(color=pur_metric), alpha=palpha) + 
       # scale_color_viridis_c(name = 'purity', option = 'C') +
@@ -563,12 +566,15 @@ mcRigor_threshold <- function(TabMC,
       ggplot2::ylim(c(ymin, ymax)) +
       # ggplot2::ylim(c(0.95, 1.6)) +
       ggplot2::xlim(c(0, min(max(TabMC$size), 500)))
+    })
     suppressWarnings(p_legend <- cowplot::get_legend(p2))
     p2 = p2 + ggplot2::theme(legend.position = 'none')
     
+    .silence_lifecycle({
     p12 = p2 + 
       ggplot2::geom_point(mapping = ggplot2::aes_string(x='size', y='depctr_TT_div', color=pur_metric), alpha=0.1, col = null_color) +
       ggplot2::xlab('metacell size') + ggplot2::ylab('statistics')
+    })
     
     # p2+p1
   }
@@ -599,10 +605,16 @@ mcRigor_threshold <- function(TabMC,
   }
   
   if (draw) {
+    .silence_lifecycle({
     pthre1 = p1 + ggplot2::geom_path(data = Thre, mapping = ggplot2::aes_string(x='size', y='thre'), color='red') 
+    })
+    .silence_lifecycle({
     pthre2 = p2 + ggplot2::geom_path(data = Thre, mapping = ggplot2::aes_string(x='size', y='thre'), color='red') 
+    })
     # pthre2+pthre1
+    .silence_lifecycle({
     pthre12 = p12 + ggplot2::geom_path(data = Thre, mapping = ggplot2::aes_string(x='size', y='thre'), color='red') 
+    })
   }
   
   TabMC$mcRigor = 'trustworthy'
@@ -615,8 +627,10 @@ mcRigor_threshold <- function(TabMC,
   
   pvioin = NULL
   if (draw) {
+    .silence_lifecycle({
     pviolin = ggplot2::ggplot(TabMC) + ggplot2::geom_violin(mapping = ggplot2::aes_string(y=pur_metric, x='mcRigor', fill='mcRigor')) +
       ggplot2::theme(legend.position = 'none') + ggplot2::xlab(NULL) + ggplot2::ylab(pur_metric)
+    })
     # pviolin = ggplot2::ggplot(TabMC) + geom_boxplot(mapping = ggplot2::aes_string(y=pur_metric, x='mcRigor', fill='mcRigor')) +
     #   ggplot2::theme(legend.position = 'none') + ggplot2::xlab(NULL) + ggplot2::ylab(pur_metric) +
     #   ggplot2::scale_fill_manual(values = c('#310690', '#F0F921'))
@@ -660,10 +674,10 @@ mcRigor_threshold <- function(TabMC,
 #' \item{scores}{A data frame containing the evaluation scores for each gamma}
 #' \item{optim_plot}{The line plot to visualize the tradeoff for hyperparameter opimization.}
 #'
-
+#' @export
 
 mcRigor_tradeoff <- function(TabMC, 
-                             threshold,
+                             threshold = NULL,
                              D_bw = 10,
                              optim_method = c('tradeoff', 'dub_rate_large', 'dub_rate_small'),
                              dub_rate=0.1, 
@@ -673,6 +687,34 @@ mcRigor_tradeoff <- function(TabMC,
   optim_method = match.arg(optim_method)
   
   Thre = threshold
+  
+  if (is.null(Thre)){
+    
+    Thre = as.data.frame(NULL)
+    
+    for (size in unique(TabMC$size)) {
+      
+      if (size == 1) next
+      
+      mcs = TabMC[TabMC$size==size,]
+      
+      thre = quantile(unlist(mcs[, rowperm_col] / mcs[, bothperm_col]), probs = 1-test_cutoff)
+      
+      Thre = rbind(Thre, c(size, thre))
+    }
+    
+    colnames(Thre) = c('size', 'thre')
+    Thre = Thre[order(Thre$size),]
+    
+    if (thre_smooth) {
+      a = stats::lowess(x=Thre$size, y=Thre$thre, f=thre_bw)
+      # plot(Thre$size, Thre$thre)
+      # points(a$x, a$y)
+      Thre$thre = a$y
+      Thre$size = a$x
+    }
+    
+  }
   
   DD <- data.frame(gamma=sort(unique(TabMC$gamma)))
   # DD <- data.frame(gamma=DD$gamma[DD$gamma %% 5 == 0])
@@ -700,7 +742,7 @@ mcRigor_tradeoff <- function(TabMC,
     weight = (max(DD$ZeroRate) - min(DD$ZeroRate)) / (max(DD$DubRate) - min(DD$DubRate) + max(DD$ZeroRate) - min(DD$ZeroRate))
   }
   DD$Score = DD$ZeroRate * (1-weight) + DD$DubRate * weight
-  # DD$Score = lowess(x = DD$gamma, y = DD$Score, f = 7 / (max(DD$gamma) - min(DD$gamma)))$y  # bandwidth around 5-10, f = 1/20 or f = 10 / (max(DD$gamma) - min(DD$gamma)) 
+  # DD$Score = stats::lowess(x = DD$gamma, y = DD$Score, f = 7 / (max(DD$gamma) - min(DD$gamma)))$y  # bandwidth around 5-10, f = 1/20 or f = 10 / (max(DD$gamma) - min(DD$gamma)) 
   DD$Score = 1 - DD$Score
   
   opt_gamma = switch(optim_method,
@@ -730,11 +772,13 @@ mcRigor_tradeoff <- function(TabMC,
         ggplot2::coord_cartesian(ylim = c(0,1), clip = 'off') +
         ggplot2::theme_light()+ ggplot2::theme(aspect.ratio = 2/3)
     } else {
+      .silence_lifecycle({
       pelbow = ggplot2::ggplot(DD, ggplot2::aes_string(x='gamma', y='DubRate')) + ggplot2::geom_path() +
         ggplot2::geom_point(data = optim, mapping = ggplot2::aes_string(x='gamma', y='DubRate'), col='red', size=3) +
         ggplot2::annotate('text', x=optim$gamma, y=optim$DubRate-0.05, label=optim$gamma, color='red', size = 3) +
         ggplot2::coord_cartesian(ylim = c(0,1), clip = 'off') +
         ggplot2::theme_light()+ ggplot2::theme(aspect.ratio = 2/3)
+      })
     }
     
     
@@ -812,18 +856,29 @@ mcRigor_buildmc <- function(obj_singlecell,
   obj_singlecell[['Metacell']] = sc_membership
   sc_membership = obj_singlecell$Metacell
   
+  scid = which(!is.na(sc_membership) & sc_membership != '')
+  sc_membership = sc_membership[scid]
+  obj_singlecell = obj_singlecell[,scid]
+  
   if (aggregate_method == 'sum') {
     counts_metacell = Seurat::AggregateExpression(obj_singlecell,
                                                   return.seurat = F,
                                                   group.by = 'Metacell',
+                                                  slot = 'counts',
                                                   verbose  = F)[[1]]
     if (is.numeric(sc_membership[1])) {
       mc_names = sapply(colnames(counts_metacell), function(x) substr(x, start = 2, stop = 100000))
       colnames(counts_metacell) = as.numeric(mc_names)
     }
   } else if (aggregate_method == 'mean') {
-    counts_sc = Seurat::GetAssayData(obj_singlecell, layer = 'counts')
-    counts_metacell = t(apply(counts_sc, 1, function(x) tapply(x, sc_membership, mean)))
+    counts_metacell = Seurat::AggregateExpression(obj_singlecell,
+                                                  return.seurat = F,
+                                                  group.by = 'Metacell',
+                                                  slot = 'counts',
+                                                  verbose  = T)[[1]]
+    mc_size = table(sc_membership)
+    mc_size = mc_size[match(colnames(counts_metacell), names(mc_size))]
+    counts_metacell = counts_metacell / matrix(rep(mc_size, nrow(counts_metacell)), ncol = length(mc_size), byrow = T)
   } else {
     counts_sc = Seurat::GetAssayData(obj_singlecell, layer = 'counts')
     counts_metacell = t(apply(counts_sc, 1, function(x) tapply(x, sc_membership, function(y) {
@@ -1251,15 +1306,17 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
   }
   
   
-  
+  .silence_lifecycle({
   p <- ggplot2::ggplot(scCoord,
                        ggplot2::aes_string(colnames(scCoord)[dims[1]],
                                            colnames(scCoord)[dims[2]],
                                            color = color_field)) +
     ggplot2::geom_point(size=pt_size, alpha = sc.alpha) +
     ggplot2::guides(color = ggplot2::guide_legend(override.aes = list(size = 2)))
+  })
   
   if(continuous_metric){
+    .silence_lifecycle({
     p <- p + 
       ggplot2::geom_point(data=centroids,
                           ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
@@ -1268,17 +1325,21 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
                           pch=21, color = 'black', stroke = 1, alpha = mc.alpha,
                           show.legend = F) +
       ggplot2::scale_size_continuous(limits = c(1,max_mcsize), range = c(1,12))
+    })
     
   }else{
+    .silence_lifecycle({
     p <- p + ggplot2::geom_point(data=centroids, 
                                  ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
                                                      colnames(centroids)[1 + dims[2]],
                                                      fill = metric), 
                                  pch=21, color = 'black', stroke = 1, alpha = mc.alpha,
                                  show.legend = F) 
+    })
   } 
   
   if (dub_mc.label){
+    .silence_lifecycle({
     p <- p + 
       ggplot2::geom_point(data=centroids[!is.na(centroids$dub_mc),],
                           ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
@@ -1286,17 +1347,21 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
                                               fill = color_field, size = metric),
                           pch=21, color = 'red', stroke = 1.5, alpha = 1,
                           show.legend = F) 
+    })
     
     if(label_text){
+      .silence_lifecycle({
       p <- p + ggplot2::geom_text(data = centroids, ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
                                                                         colnames(centroids)[1 + dims[2]],
                                                                         label = 'dub_mc'), 
                                   color = 'black', size = 2,
                                   show.legend = F)
+      })
     }
   }
   
   if (dub_mc_test.label){
+    .silence_lifecycle({
     p <- p + 
       ggplot2::geom_point(data=centroids[!is.na(centroids$dub_mc_test),],
                           ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
@@ -1304,13 +1369,16 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
                                               fill = color_field, size = metric),
                           pch=21, color = 'red', stroke = 1.5, alpha = 1,
                           show.legend = F) 
+    })
     
     if(label_text){
+      .silence_lifecycle({
       p <- p + ggplot2::geom_text(data = centroids, ggplot2::aes_string(colnames(centroids)[1 + dims[1]],
                                                                         colnames(centroids)[1 + dims[2]],
                                                                         label = 'dub_mc_test'), 
                                   color = 'black', size = 2,
                                   show.legend = F)
+      })
     }
   }
   
@@ -1337,4 +1405,15 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
 
 
 
+
+.silence_lifecycle <- function(expr) {
+  withCallingHandlers(
+    expr,
+    warning = function(w) {
+      if (inherits(w, "lifecycle_warning_deprecated")) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
+}
 

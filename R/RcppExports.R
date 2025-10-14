@@ -2,22 +2,22 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 mc_indpd_stats_cpp <- function(dat) {
-    .Call('_mcRigor_mc_indpd_stats_cpp', PACKAGE = 'mcRigor', dat)
+    .Call(`_mcRigor_mc_indpd_stats_cpp`, dat)
 }
 
 colwise_perm_cpp <- function(dat) {
-    .Call('_mcRigor_colwise_perm_cpp', PACKAGE = 'mcRigor', dat)
+    .Call(`_mcRigor_colwise_perm_cpp`, dat)
 }
 
 rowwise_perm_cpp <- function(dat) {
-    .Call('_mcRigor_rowwise_perm_cpp', PACKAGE = 'mcRigor', dat)
+    .Call(`_mcRigor_rowwise_perm_cpp`, dat)
 }
 
 scale_cpp <- function(M) {
-    .Call('_mcRigor_scale_cpp', PACKAGE = 'mcRigor', M)
+    .Call(`_mcRigor_scale_cpp`, M)
 }
 
 mc_test_stats <- function(counts, gene_select_thre = 0.1) {
-    .Call('_mcRigor_mc_test_stats', PACKAGE = 'mcRigor', counts, gene_select_thre)
+    .Call(`_mcRigor_mc_test_stats`, counts, gene_select_thre)
 }
 

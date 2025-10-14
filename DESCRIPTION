@@ -8,10 +8,10 @@ Maintainer: Pan Liu <panliu23@g.ucla.edu>
 Description: Detection of dubiuos metacells and optimization of metacell partitioning.
 License: MIT + file LICENSE
 Encoding: UTF-8
-Imports: Rcpp (>= 1.0.9), RcppEigen, Seurat (== 5.1.0), Signac, ggplot2 (>= 3.3.2), cowplot (>= 1.1.3), entropy, stats, utils
+Imports: Rcpp (>= 1.0.9), RcppEigen, Seurat (>= 5.1.0), Signac, ggplot2 (>= 3.3.2), cowplot (>= 1.1.3), entropy, stats, utils
 Suggests: BiocStyle, BiocStyle, sessioninfo
 LinkingTo: Rcpp, RcppEigen
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Depends: 
     R (>= 4.0.0)
 URL: https://jsb-ucla.github.io/mcRigor/
