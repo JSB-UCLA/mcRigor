@@ -1,20 +1,20 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
-<url><loc>https://jsb-ucla.github.io/mcRigor/404.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/articles/index.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/articles/mcRigor-1-detect-dubmc.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/articles/mcRigor-2-optimize.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/articles/mcRigor-3-mc-method.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/authors.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/index.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/index.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/mcRigor-package.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/mcRigor_DETECT.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/mcRigor_OPTIMIZE.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/mcRigor_buildmc.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/mcRigor_covariate.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/mcRigor_projection.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/mcRigor_purity.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/mcRigor_threshold.html</loc></url>
-<url><loc>https://jsb-ucla.github.io/mcRigor/reference/mcRigor_tradeoff.html</loc></url>
+<url><loc>/404.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/articles/mcRigor-1-detect-dubmc.html</loc></url>
+<url><loc>/articles/mcRigor-2-optimize.html</loc></url>
+<url><loc>/articles/mcRigor-3-mc-method.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/mcRigor-package.html</loc></url>
+<url><loc>/reference/mcRigor_DETECT.html</loc></url>
+<url><loc>/reference/mcRigor_OPTIMIZE.html</loc></url>
+<url><loc>/reference/mcRigor_buildmc.html</loc></url>
+<url><loc>/reference/mcRigor_covariate.html</loc></url>
+<url><loc>/reference/mcRigor_projection.html</loc></url>
+<url><loc>/reference/mcRigor_purity.html</loc></url>
+<url><loc>/reference/mcRigor_threshold.html</loc></url>
+<url><loc>/reference/mcRigor_tradeoff.html</loc></url>
 </urlset>
 

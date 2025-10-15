@@ -1,11 +1,8 @@
 pandoc: 3.1.11
-pkgdown: 2.1.1
+pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   mcRigor-1-detect-dubmc: mcRigor-1-detect-dubmc.html
   mcRigor-2-optimize: mcRigor-2-optimize.html
   mcRigor-3-mc-method: mcRigor-3-mc-method.html
-last_built: 2024-11-26T04:43Z
-urls:
-  reference: https://jsb-ucla.github.io/mcRigor/reference
-  article: https://jsb-ucla.github.io/mcRigor/articles
+last_built: 2025-10-15T00:12Z
