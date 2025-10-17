@@ -27,7 +27,7 @@ mcRigor_DETECT(
 )
 }
 \arguments{
-\item{obj_singlecell}{Seurat object of the original single cells.}
+\item{obj_singlecell}{A Seurat object of the original single cells.}
 
 \item{cell_membership}{A dataframe, each column of which contains the metacell membership of single cells under a given gamma (granularity level). 
 The column names should be the corresponding gamma's (in the character type). The row names should be the single cell id's.}

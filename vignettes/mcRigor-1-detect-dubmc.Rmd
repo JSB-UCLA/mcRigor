@@ -63,6 +63,12 @@ We call the function `mcRigor_DETECT` to detect dubious metacells for the metace
 detect_res = mcRigor_DETECT(obj_singlecell = obj_singlecell, cell_membership = cell_membership)
 ```
 
+Alternatively, we can input all metacell partitions (`cell_membership_all`) into the function `mcRigor_DETECT` and specify the partition of interest by setting the argument `tgamma`. The code below indicates that we aim to detect dubious metacells for the partition under granularity level `tgamma` = 50, while borrowing information from other metacell partitions during null construction. This approach is recommended when additional computation time is acceptable, as it generally produces more stable results.
+
+```{r, eval=FALSE}
+detect_res = mcRigor_DETECT(obj_singlecell = obj_singlecell, cell_membership = cell_membership_all, tgamma = 50)
+```
+
 The Seurat object of metacells are stored in the `obj_metacell` field of the output `detect_res`.The mcRigor detection results are recorded in the `mc_res` field of the output `detect_res` as well as the metadata of the Seurat object with name `mcRigor`.
 
 ```{r}

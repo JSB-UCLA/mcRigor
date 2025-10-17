@@ -8,7 +8,7 @@
 #' @description Main functionality 1: To detect dubious metacells for a given metacell partition
 #'
 #'
-#' @param obj_singlecell Seurat object of the original single cells.
+#' @param obj_singlecell A Seurat object of the original single cells.
 #' @param cell_membership A dataframe, each column of which contains the metacell membership of single cells under a given gamma (granularity level). 
 #' The column names should be the corresponding gamma's (in the character type). The row names should be the single cell id's.
 #' @param tgamma The target gamma value --- the gamma (in the character type) corresponding to the metacell partition where dubious metacells detection will be performed.
@@ -181,8 +181,8 @@ mcRigor_DETECT <- function(obj_singlecell,
       TabMC$TT_div[is.na(TabMC$TT_div)] = 1
       
       if (is.null(output_file)) 
-        output_file = paste0('Tabmc_', assay_type, '_detect.RData')
-      save(TabMC, file = output_file)
+        output_file = paste0('Tabmc_', assay_type, '_detect.rds')
+      saveRDS(TabMC, file = output_file)
     }
     
   }
@@ -195,8 +195,8 @@ mcRigor_DETECT <- function(obj_singlecell,
   TabMC$TT_div[is.na(TabMC$TT_div)] = 1
   
   if (is.null(output_file)) 
-    output_file = paste0('Tabmc_', assay_type, '_detect.RData')
-  save(TabMC, file = output_file)
+    output_file = paste0('Tabmc_', assay_type, '_detect.rds')
+  saveRDS(TabMC, file = output_file)
   
   ###########
   
@@ -205,6 +205,7 @@ mcRigor_DETECT <- function(obj_singlecell,
                                thre_smooth = thre_smooth, thre_bw = thre_bw, 
                                draw = draw, pur_metric = pur_metric)
   Thre = test_res$threshold
+  TabMC = test_res$TabMC
   
   ##
   
@@ -236,7 +237,7 @@ mcRigor_DETECT <- function(obj_singlecell,
 #' @description Main functionality 2: To select the optimal hyperparameter for metacell partitioning 
 #'
 #'
-#' @param obj_singlecell Seurat object of the original single cells.
+#' @param obj_singlecell A Seurat object of the original single cells.
 #' @param cell_membership A dataframe, each column of which contains the metacell membership of single cells under a given gamma. 
 #' The column names should be the corresponding gamma's. The row names should be the single cell id's.
 #' @param Nrep The number of permutation repetitions we use when deriving the null.
@@ -418,8 +419,8 @@ mcRigor_OPTIMIZE <- function(obj_singlecell,
       TabMC$TT_div[is.na(TabMC$TT_div)] = 1
       
       if (is.null(output_file)) 
-        output_file = paste0('Tabmc_', assay_type, '_optimize.RData')
-      save(TabMC, file = output_file)
+        output_file = paste0('Tabmc_', assay_type, '_optimize.rds')
+      saveRDS(TabMC, file = output_file)
     }
     
   }
@@ -432,8 +433,8 @@ mcRigor_OPTIMIZE <- function(obj_singlecell,
   TabMC$TT_div[is.na(TabMC$TT_div)] = 1
   
   if (is.null(output_file)) 
-    output_file = paste0('Tabmc_', assay_type, '_optimize.RData')
-  save(TabMC, file = output_file)
+    output_file = paste0('Tabmc_', assay_type, '_optimize.rds')
+  saveRDS(TabMC, file = output_file)
   
   ###########
   
@@ -445,11 +446,12 @@ mcRigor_OPTIMIZE <- function(obj_singlecell,
   TabMC = test_res$TabMC
   
   if (is.null(output_file)) 
-    output_file = paste0('Tabmc_', assay_type, '_optimize.RData')
-  save(TabMC, file = output_file)
+    output_file = paste0('Tabmc_', assay_type, '_optimize.rds')
+  saveRDS(TabMC, file = output_file)
   
   tradeoff_res = mcRigor_tradeoff(TabMC, 
                                   threshold = Thre,
+                                  test_cutoff = test_cutoff,
                                   optim_method = optim_method, 
                                   D_bw = D_bw,
                                   weight = weight,
@@ -662,6 +664,7 @@ mcRigor_threshold <- function(TabMC,
 #'
 #' @param TabMC A dataframe containing the permutation results. Saved in the previous steps
 #' @param threshold A dataframe containing the dubious metacell detection thresholds given by mcRigor_threshold
+#' @param test_cutoff The test size for dubious metacell detection testing
 #' @param D_bw A boolean indicating whether to smooth the dubious rate with respect to metacell size
 #' @param optim_method The method used for granularity level optimization. Default is trading off between sparsity and dubious rate
 #' @param weight The weight for dubious rate in the tradeoff.
@@ -678,9 +681,10 @@ mcRigor_threshold <- function(TabMC,
 
 mcRigor_tradeoff <- function(TabMC, 
                              threshold = NULL,
+                             test_cutoff = 0.01,
                              D_bw = 10,
                              optim_method = c('tradeoff', 'dub_rate_large', 'dub_rate_small'),
-                             dub_rate=0.1, 
+                             dub_rate = 0.1, 
                              weight = 0.5,
                              draw = T) {
   
@@ -689,6 +693,9 @@ mcRigor_tradeoff <- function(TabMC,
   Thre = threshold
   
   if (is.null(Thre)){
+    
+    rowperm_col = grep('T_rowperm', colnames(TabMC))
+    bothperm_col = grep('T_bothperm', colnames(TabMC))
     
     Thre = as.data.frame(NULL)
     
@@ -802,7 +809,7 @@ mcRigor_tradeoff <- function(TabMC,
 #' @description To build an metacell object from the given metacell partitioning (sc_membership)
 #'
 #'
-#' @param obj_singlecell the Seurat object of single cells
+#' @param obj_singlecell A Seurat object of single cells
 #' @param sc_membership A named vector (or dataframe) of the metacell membership of single cells
 #' @param aggregate_method The method to aggregate single cell profiles into metacell profiles
 #' @param assay_type The type of data assay yuo are using, depending on which different normalization would be used.
@@ -876,6 +883,10 @@ mcRigor_buildmc <- function(obj_singlecell,
                                                   group.by = 'Metacell',
                                                   slot = 'counts',
                                                   verbose  = T)[[1]]
+    if (is.numeric(sc_membership[1])) {
+      mc_names = sapply(colnames(counts_metacell), function(x) substr(x, start = 2, stop = 100000))
+      colnames(counts_metacell) = as.numeric(mc_names)
+    }
     mc_size = table(sc_membership)
     mc_size = mc_size[match(colnames(counts_metacell), names(mc_size))]
     counts_metacell = counts_metacell / matrix(rep(mc_size, nrow(counts_metacell)), ncol = length(mc_size), byrow = T)
@@ -976,7 +987,7 @@ mcRigor_buildmc <- function(obj_singlecell,
       if (mcid %in% rownames(test_stats)){
         
         if (obj_metacell$size[mcid] > 1 && 
-            test_stats[mcid, 'TT_div'] > Thre$thre[Thre$size == obj_metacell$size[mcid]]) {
+            test_stats[mcid, 'TT_div'] > Thre$thre[which.min(abs(Thre$size - obj_metacell$size[mcid]))]) {
           obj_metacell$mcRigor[mcid] = 'dubious'
           obj_metacell@misc$cell_membership$mcRigor_sc[obj_metacell@misc$cell_membership$Metacell == mcid] = 'dubious'
         }

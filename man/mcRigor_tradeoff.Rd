@@ -7,6 +7,7 @@
 mcRigor_tradeoff(
   TabMC,
   threshold = NULL,
+  test_cutoff = 0.01,
   D_bw = 10,
   optim_method = c("tradeoff", "dub_rate_large", "dub_rate_small"),
   dub_rate = 0.1,
@@ -18,6 +19,8 @@ mcRigor_tradeoff(
 \item{TabMC}{A dataframe containing the permutation results. Saved in the previous steps}
 
 \item{threshold}{A dataframe containing the dubious metacell detection thresholds given by mcRigor_threshold}
+
+\item{test_cutoff}{The test size for dubious metacell detection testing}
 
 \item{D_bw}{A boolean indicating whether to smooth the dubious rate with respect to metacell size}
 

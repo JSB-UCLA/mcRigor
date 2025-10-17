@@ -25,7 +25,7 @@ mcRigor_buildmc(
 )
 }
 \arguments{
-\item{obj_singlecell}{the Seurat object of single cells}
+\item{obj_singlecell}{A Seurat object of single cells}
 
 \item{sc_membership}{A named vector (or dataframe) of the metacell membership of single cells}
 
