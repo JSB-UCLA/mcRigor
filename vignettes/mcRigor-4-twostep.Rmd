@@ -26,7 +26,7 @@ tools::R_user_dir("mcRigor", which="cache")
 
 ```{r setup, message=FALSE, warning=FALSE, results='hide'}
 #tools::R_user_dir("mcRigor", which="cache")
-#library(mcRigor)
+library(mcRigor)
 library(Seurat)
 library(ggplot2)
 ```
