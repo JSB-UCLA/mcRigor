@@ -41,7 +41,7 @@ mcRigorTS_Step1 <- function(obj_singlecell,
   
   obj_sc_dub = obj_singlecell[, match(dub_sc, colnames(obj_singlecell))]
   
-  obj_sc_dub = obj_sc_dub[rowSums(GetAssayData(obj_sc_dub, layer = 'counts')) > 0, ]
+  obj_sc_dub = obj_sc_dub[rowSums(as.matrix(Seurat::GetAssayData(obj_sc_dub, layer = 'counts'))) > 0, ]
   
   saveRDS(obj_sc_dub, file = paste0('dubsc_', method, '.rds'))
   
@@ -49,7 +49,7 @@ mcRigorTS_Step1 <- function(obj_singlecell,
     
     if (!dir.exists(method)) dir.create(method)
     
-    write.csv(t(GetAssayData(obj_sc_dub, layer = 'counts')), file = paste0(method, '/counts.csv'))
+    write.csv(t(as.matrix(Seurat::GetAssayData(obj_sc_dub, layer = 'counts'))), file = paste0(method, '/counts.csv'))
     write.csv(obj_sc_dub@meta.data, file = paste0(method, '/metadata.csv'))
     
   }
@@ -117,7 +117,7 @@ mcRigorTS_Step2 <- function(step1_res,
   sc_membership_first = sc_membership_first[sc_membership_tab$mcRigor_sc == 'trustworthy']
   
   TabMC = step1_res$target_res$TabMC
-  tgamma = sub("mc(\\d+)-.*", "\\1", Cells(step1_res$obj_metacell_step1)[1])
+  tgamma = sub("mc(\\d+)-.*", "\\1", Seurat::Cells(step1_res$obj_metacell_step1)[1])
   TabMC = TabMC[TabMC$gamma == as.integer(tgamma),]
   
   
