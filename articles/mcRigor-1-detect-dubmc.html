@@ -36,6 +36,7 @@
 <li><a class="dropdown-item" href="../articles/mcRigor-1-detect-dubmc.html">Functionality 1: detect dubious metacells for a given metacell partition</a></li>
     <li><a class="dropdown-item" href="../articles/mcRigor-2-optimize.html">Functionality 2: optimize metacell partitioning</a></li>
     <li><a class="dropdown-item" href="../articles/mcRigor-3-mc-method.html">Implementing metacell partitioning methods</a></li>
+    <li><a class="dropdown-item" href="../articles/mcRigor-4-twostep.html">Extension: mcRigor two-step</a></li>
   </ul>
 </li>
       </ul>
@@ -59,7 +60,7 @@
       <h1>Functionality 1: detect dubious metacells for a given metacell partition</h1>
                         <h4 data-toc-skip class="author">Pan Liu</h4>
             
-            <h4 data-toc-skip class="date">15 October 2025</h4>
+            <h4 data-toc-skip class="date">18 October 2025</h4>
       
 
       <div class="d-none name"><code>mcRigor-1-detect-dubmc.Rmd</code></div>
@@ -69,7 +70,7 @@
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">#tools::R_user_dir("mcRigor", which="cache")</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jsb-ucla.github.io/mcRigor/" class="external-link">mcRigor</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://jsb-ucla.github.io/mcRigor/">mcRigor</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
@@ -138,13 +139,24 @@ metacells for the metacell partition represented by
 <code>cell_membership</code>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">detect_res</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcRigor_DETECT.html">mcRigor_DETECT</a></span><span class="op">(</span>obj_singlecell <span class="op">=</span> <span class="va">obj_singlecell</span>, cell_membership <span class="op">=</span> <span class="va">cell_membership</span><span class="op">)</span></span></code></pre></div>
+<p>Alternatively, we can input all metacell partitions
+(<code>cell_membership_all</code>) into the function
+<code>mcRigor_DETECT</code> and specify the partition of interest by
+setting the argument <code>tgamma</code>. The code below indicates that
+we aim to detect dubious metacells for the partition under granularity
+level <code>tgamma</code> = 50, while borrowing information from other
+metacell partitions during null construction. This approach is
+recommended when additional computation time is acceptable, as it
+generally produces more stable results.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">detect_res</span> <span class="op">=</span> <span class="fu"><a href="../reference/mcRigor_DETECT.html">mcRigor_DETECT</a></span><span class="op">(</span>obj_singlecell <span class="op">=</span> <span class="va">obj_singlecell</span>, cell_membership <span class="op">=</span> <span class="va">cell_membership_all</span>, tgamma <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></code></pre></div>
 <p>The Seurat object of metacells are stored in the
 <code>obj_metacell</code> field of the output
 <code>detect_res</code>.The mcRigor detection results are recorded in
 the <code>mc_res</code> field of the output <code>detect_res</code> as
 well as the metadata of the Seurat object with name
 <code>mcRigor</code>.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">detect_res</span><span class="op">$</span><span class="va">mc_res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     dubious trustworthy </span></span>
@@ -162,7 +174,7 @@ well as the metadata of the Seurat object with name
 <p>The function <code>mcRigor_projection</code> can draw the metacells
 projected to the two-dimensional embedding space of single cells and
 mark the detected dubious metacells</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sc_membership</span> <span class="op">=</span> <span class="va">obj_metacell</span><span class="op">@</span><span class="va">misc</span><span class="op">$</span><span class="va">cell_membership</span><span class="op">$</span><span class="va">Metacell</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">sc_membership</span><span class="op">)</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="va">obj_metacell</span><span class="op">@</span><span class="va">misc</span><span class="op">$</span><span class="va">cell_membership</span><span class="op">)</span></span>
 <span></span>
@@ -170,14 +182,14 @@ mark the detected dubious metacells</p>
 <span>                           color_field <span class="op">=</span> <span class="st">'celltype.l1'</span>,</span>
 <span>                           dub_mc_test.label <span class="op">=</span> <span class="cn">T</span>, test_stats <span class="op">=</span> <span class="va">detect_res</span><span class="op">$</span><span class="va">TabMC</span>, Thre <span class="op">=</span> <span class="va">detect_res</span><span class="op">$</span><span class="va">thre</span><span class="op">)</span></span>
 <span><span class="va">plot</span></span></code></pre></div>
-<p><img src="mcRigor-1-detect-dubmc_files/figure-html/unnamed-chunk-6-1.png" width="700"></p>
+<p><img src="mcRigor-1-detect-dubmc_files/figure-html/unnamed-chunk-7-1.png" width="700"></p>
 <p>The dubious metacells are marked by red circles while the trustworthy
 metacells are with black circles.</p>
 </div>
 <div class="section level2">
 <h2 id="session-information">Session information<a class="anchor" aria-label="anchor" href="#session-information"></a>
 </h2>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; R version 4.5.1 (2025-06-13)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-pc-linux-gnu</span></span>
@@ -240,7 +252,7 @@ metacells are with black circles.</p>
 <span><span class="co">#&gt; [100] cli_3.6.5              spatstat.sparse_3.1-0  textshaping_1.0.4     </span></span>
 <span><span class="co">#&gt; [103] spam_2.11-1            viridisLite_0.4.2      dplyr_1.1.4           </span></span>
 <span><span class="co">#&gt; [106] uwot_0.2.3             gtable_0.3.6           sass_0.4.10           </span></span>
-<span><span class="co">#&gt; [109] digest_0.6.37          progressr_0.16.0       ggrepel_0.9.6         </span></span>
+<span><span class="co">#&gt; [109] digest_0.6.37          progressr_0.17.0       ggrepel_0.9.6         </span></span>
 <span><span class="co">#&gt; [112] htmlwidgets_1.6.4      farver_2.1.2           htmltools_0.5.8.1     </span></span>
 <span><span class="co">#&gt; [115] pkgdown_2.1.3          lifecycle_1.0.4        httr_1.4.7            </span></span>
 <span><span class="co">#&gt; [118] mime_0.13              MASS_7.3-65</span></span></code></pre></div>

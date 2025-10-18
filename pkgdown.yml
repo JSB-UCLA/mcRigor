@@ -5,4 +5,8 @@ articles:
   mcRigor-1-detect-dubmc: mcRigor-1-detect-dubmc.html
   mcRigor-2-optimize: mcRigor-2-optimize.html
   mcRigor-3-mc-method: mcRigor-3-mc-method.html
-last_built: 2025-10-15T00:12Z
+  mcRigor-4-twostep: mcRigor-4-twostep.html
+last_built: 2025-10-18T06:35Z
+urls:
+  reference: https://jsb-ucla.github.io/mcRigor/reference
+  article: https://jsb-ucla.github.io/mcRigor/articles
