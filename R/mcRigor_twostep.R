@@ -49,8 +49,8 @@ mcRigorTS_Step1 <- function(obj_singlecell,
     
     if (!dir.exists(method)) dir.create(method)
     
-    write.csv(t(as.matrix(Seurat::GetAssayData(obj_sc_dub, layer = 'counts'))), file = paste0(method, '/counts.csv'))
-    write.csv(obj_sc_dub@meta.data, file = paste0(method, '/metadata.csv'))
+    utils::write.csv(t(as.matrix(Seurat::GetAssayData(obj_sc_dub, layer = 'counts'))), file = paste0(method, '/counts.csv'))
+    utils::write.csv(obj_sc_dub@meta.data, file = paste0(method, '/metadata.csv'))
     
   }
   
@@ -71,7 +71,7 @@ mcRigorTS_Step1 <- function(obj_singlecell,
 #' @param obj_singlecell A Seurat object of the original single cells.
 #' @param cell_membership_twostep A dataframe, each column of which contains the metacell membership of single cells that need to be re-partitioned under a given gamma (granularity level). 
 #' The column names should be the corresponding gamma's (in the character type). The row names should be the single cell id's.
-#' @param TabMC A dataframe containing the permutation results and mcRigor results in dubious metacell detection. Saved in the previous steps through function mcRigor_DETECT.
+#' @param twostep_gamma The granularity level value for the second step. Default is NULL.
 #' @param method The metacell partitioning method used to build metacells. Available: "seacells" (default, SEACells), "mc1" (MetaCell), "mc2" (MetaCell2), "supercell" (SuperCell), "metaq" (MetaQ).
 #' @param custom_thre A boolean indicating whether to re-compute the threshold values.
 #' @param color_field The variable based on which to color the cells.
@@ -153,11 +153,11 @@ mcRigorTS_Step2 <- function(step1_res,
     
     obj_metacell_final =  mcRigor_buildmc(obj_singlecell = obj_singlecell,
                                           sc_membership = sc_membership_final,
-                                          add_testres = T, testres = testres_final)
+                                          add_testres = T, test_stats = testres_final)
     
     plot = mcRigor_projection(obj_singlecell = obj_singlecell,
                               sc_membership = sc_membership_final,
-                              add_testres = T, testres = testres_final,
+                              add_testres = T, test_stats = testres_final,
                               dub_mc_test.label = T,
                               color_field = color_field)
     

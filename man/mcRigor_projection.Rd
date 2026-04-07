@@ -49,6 +49,26 @@ mcRigor_projection(
 \item{test_cutoff}{The test size for dubious metacell detection testing}
 
 \item{color_field}{The variable based on which to color the cells.}
+
+\item{cpalette}{The color palette for visualization}
+
+\item{sc.alpha}{The level of single cell point transparency for visualization}
+
+\item{mc.alpha}{The level of metacell circle transparency for visualization}
+
+\item{pt_size}{The single cell point size for visualization}
+
+\item{axis_lab}{A bool indicating whether to add axis labels in visualization}
+
+\item{max_mcsize}{The maximum metacell size used for visualization scaling}
+
+\item{continuous_metric}{A bool indicating whether the field "metric" contains continuous values}
+
+\item{dub_mc.label}{A bool indicating whether to mark the ground truth dubious metacells using red color or not}
+
+\item{dub_mc_test.label}{A bool indicating whether to mark the detected dubious metacells using red color or not}
+
+\item{label_text}{A bool indicating whether to label the names of metacells or not}
 }
 \value{
 a scatter plot of metacells projected to the single cell 2D embedding space.

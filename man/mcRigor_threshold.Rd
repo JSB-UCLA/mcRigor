@@ -9,7 +9,7 @@ mcRigor_threshold(
   test_cutoff = 0.01,
   thre_smooth = T,
   thre_bw = 1/6,
-  draw = T,
+  draw = F,
   palpha = 1,
   org_color = c("red", "orange", "yellow", "lightblue"),
   null_color = "#666666",

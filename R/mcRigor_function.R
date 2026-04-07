@@ -453,6 +453,8 @@ mcRigor_OPTIMIZE <- function(obj_singlecell,
                                   threshold = Thre,
                                   test_cutoff = test_cutoff,
                                   optim_method = optim_method, 
+                                  thre_smooth = thre_smooth, 
+                                  thre_bw = thre_bw,
                                   D_bw = D_bw,
                                   weight = weight,
                                   dub_rate = dub_rate, 
@@ -516,7 +518,7 @@ mcRigor_threshold <- function(TabMC,
                               test_cutoff = 0.01, 
                               thre_smooth = T, 
                               thre_bw = 1/6,
-                              draw = T,
+                              draw = F,
                               palpha = 1,
                               org_color = c('red', 'orange','yellow', 'lightblue'),  # c('#CCA453')
                               null_color = '#666666',
@@ -534,11 +536,13 @@ mcRigor_threshold <- function(TabMC,
     ggplot2::theme_set(ggplot2::theme_classic())
     
     if (!is.null(pur_metric) && !pur_metric %in% colnames(TabMC)) pur_metric = colnames(TabMC)[grep(pur_metric, colnames(TabMC))[1]]
-    if (is.null(pur_metric)) pur_metric = colnames(TabMC)[grep('type', colnames(TabMC))[1]]
-    if (is.na(pur_metric))  pur_metric = colnames(TabMC)[grep('_purity', colnames(TabMC))[length(grep('_purity', colnames(TabMC)))]]
-    if (is.na(pur_metric)) {
-      pur_metric = 'ident'
-      TabMC[[pur_metric]] = 'all'
+    if (is.null(pur_metric)) {
+      if (length(grep('type', colnames(TabMC))) > 0)  pur_metric = colnames(TabMC)[grep('type', colnames(TabMC))[1]]
+      else if (length(grep('_purity', colnames(TabMC))) > 0) pur_metric = colnames(TabMC)[grep('_purity', colnames(TabMC))[length(grep('_purity', colnames(TabMC)))]]
+      else {
+        pur_metric = 'ident'
+        TabMC[[pur_metric]] = 1
+      }  
     }
     
     pur_min = min(TabMC[[pur_metric]])
@@ -548,7 +552,7 @@ mcRigor_threshold <- function(TabMC,
     
     .silence_lifecycle({
     p1 = ggplot2::ggplot(TabMC, ggplot2::aes_string(x='size', y='depctr_TT_div')) +
-      ggplot2::geom_point(mapping = ggplot2::aes_string(color=pur_metric), alpha=palpha, col = null_color) + 
+      ggplot2::geom_point(alpha=palpha, col = null_color) + 
       # ggplot2::scale_color_gradientn(name=pur_metric, limits = c(pur_min, 1), colors = org_color) +
       ggplot2::theme(legend.position = 'none')  +
       ggplot2::ylab('mcDiv_null') + ggplot2::xlab('metacell size') +
@@ -627,7 +631,7 @@ mcRigor_threshold <- function(TabMC,
   }
   # print(table(TabMC$mcRigor))
   
-  pvioin = NULL
+  pviolin = NULL
   if (draw) {
     .silence_lifecycle({
     pviolin = ggplot2::ggplot(TabMC) + ggplot2::geom_violin(mapping = ggplot2::aes_string(y=pur_metric, x='mcRigor', fill='mcRigor')) +
@@ -667,6 +671,8 @@ mcRigor_threshold <- function(TabMC,
 #' @param test_cutoff The test size for dubious metacell detection testing
 #' @param D_bw A boolean indicating whether to smooth the dubious rate with respect to metacell size
 #' @param optim_method The method used for granularity level optimization. Default is trading off between sparsity and dubious rate
+#' @param thre_smooth A boolean indicating whether to smooth the threshold function
+#' @param thre_bw If thre_smooth is True, thre_bw specifies the bandwidth for smoothing.
 #' @param weight The weight for dubious rate in the tradeoff.
 #' @param dub_rate If tradeoff is not used for optimization, what is highest acceptable dubious rate
 #' @param draw  A boolean indicating whether to visualize the mcRigor results
@@ -684,6 +690,8 @@ mcRigor_tradeoff <- function(TabMC,
                              test_cutoff = 0.01,
                              D_bw = 10,
                              optim_method = c('tradeoff', 'dub_rate_large', 'dub_rate_small'),
+                             thre_smooth = T, 
+                             thre_bw = 1/6,
                              dub_rate = 0.1, 
                              weight = 0.5,
                              draw = T) {
@@ -705,7 +713,7 @@ mcRigor_tradeoff <- function(TabMC,
       
       mcs = TabMC[TabMC$size==size,]
       
-      thre = quantile(unlist(mcs[, rowperm_col] / mcs[, bothperm_col]), probs = 1-test_cutoff)
+      thre = stats::quantile(unlist(mcs[, rowperm_col] / mcs[, bothperm_col]), probs = 1-test_cutoff)
       
       Thre = rbind(Thre, c(size, thre))
     }
@@ -1209,13 +1217,20 @@ mcRigor_purity <- function(sc_covariate, sc_membership,
 #' @param dims The dimensions to use in the single cell embeddings
 #' @param metric The variable that determines the sizes of dots representing the metacells
 #' @param color_field The variable based on which to color the cells.
-#' 
 #' @param add_testres A bool indicating whether to add the mcRigor results (dubious or trustworthy) as part of obj_metacell's metadata
 #' @param test_stats If add_testres = True, this argument is needed. Usually should be TabMC, an output from previous steps.
 #' @param Thre The threshold for dubious metacell detection. If not inputed, it will be computed based on test_stats.
 #' @param test_cutoff The test size for dubious metacell detection testing
-#'
-#'
+#' @param cpalette The color palette for visualization
+#' @param sc.alpha The level of single cell point transparency for visualization
+#' @param mc.alpha The level of metacell circle transparency for visualization
+#' @param pt_size The single cell point size for visualization
+#' @param axis_lab A bool indicating whether to add axis labels in visualization
+#' @param max_mcsize The maximum metacell size used for visualization scaling
+#' @param continuous_metric A bool indicating whether the field "metric" contains continuous values
+#' @param dub_mc.label A bool indicating whether to mark the ground truth dubious metacells using red color or not
+#' @param dub_mc_test.label A bool indicating whether to mark the detected dubious metacells using red color or not
+#' @param label_text A bool indicating whether to label the names of metacells or not
 #'
 #' @return a scatter plot of metacells projected to the single cell 2D embedding space.
 #'

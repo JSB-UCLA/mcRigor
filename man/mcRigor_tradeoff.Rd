@@ -10,6 +10,8 @@ mcRigor_tradeoff(
   test_cutoff = 0.01,
   D_bw = 10,
   optim_method = c("tradeoff", "dub_rate_large", "dub_rate_small"),
+  thre_smooth = T,
+  thre_bw = 1/6,
   dub_rate = 0.1,
   weight = 0.5,
   draw = T
@@ -25,6 +27,10 @@ mcRigor_tradeoff(
 \item{D_bw}{A boolean indicating whether to smooth the dubious rate with respect to metacell size}
 
 \item{optim_method}{The method used for granularity level optimization. Default is trading off between sparsity and dubious rate}
+
+\item{thre_smooth}{A boolean indicating whether to smooth the threshold function}
+
+\item{thre_bw}{If thre_smooth is True, thre_bw specifies the bandwidth for smoothing.}
 
 \item{dub_rate}{If tradeoff is not used for optimization, what is highest acceptable dubious rate}
 

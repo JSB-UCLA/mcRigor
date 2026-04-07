@@ -22,13 +22,13 @@ mcRigorTS_Step2(
 \item{cell_membership_twostep}{A dataframe, each column of which contains the metacell membership of single cells that need to be re-partitioned under a given gamma (granularity level). 
 The column names should be the corresponding gamma's (in the character type). The row names should be the single cell id's.}
 
+\item{twostep_gamma}{The granularity level value for the second step. Default is NULL.}
+
 \item{method}{The metacell partitioning method used to build metacells. Available: "seacells" (default, SEACells), "mc1" (MetaCell), "mc2" (MetaCell2), "supercell" (SuperCell), "metaq" (MetaQ).}
 
 \item{custom_thre}{A boolean indicating whether to re-compute the threshold values.}
 
 \item{color_field}{The variable based on which to color the cells.}
-
-\item{TabMC}{A dataframe containing the permutation results and mcRigor results in dubious metacell detection. Saved in the previous steps through function mcRigor_DETECT.}
 }
 \value{
 A list containing the following fields: 
