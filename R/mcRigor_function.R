@@ -879,7 +879,6 @@ mcRigor_buildmc <- function(obj_singlecell,
     counts_metacell = Seurat::AggregateExpression(obj_singlecell,
                                                   return.seurat = F,
                                                   group.by = 'Metacell',
-                                                  layer = 'counts',
                                                   verbose  = F)[[1]]
     if (is.numeric(sc_membership[1])) {
       mc_names = sapply(colnames(counts_metacell), function(x) substr(x, start = 2, stop = 100000))
@@ -889,7 +888,6 @@ mcRigor_buildmc <- function(obj_singlecell,
     counts_metacell = Seurat::AggregateExpression(obj_singlecell,
                                                   return.seurat = F,
                                                   group.by = 'Metacell',
-                                                  layer = 'counts',
                                                   verbose  = T)[[1]]
     if (is.numeric(sc_membership[1])) {
       mc_names = sapply(colnames(counts_metacell), function(x) substr(x, start = 2, stop = 100000))
