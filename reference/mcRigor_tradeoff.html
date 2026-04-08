@@ -50,6 +50,8 @@
 <span>  test_cutoff <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>  D_bw <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  optim_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"tradeoff"</span>, <span class="st">"dub_rate_large"</span>, <span class="st">"dub_rate_small"</span><span class="op">)</span>,</span>
+<span>  thre_smooth <span class="op">=</span> <span class="cn">T</span>,</span>
+<span>  thre_bw <span class="op">=</span> <span class="fl">1</span><span class="op">/</span><span class="fl">6</span>,</span>
 <span>  dub_rate <span class="op">=</span> <span class="fl">0.1</span>,</span>
 <span>  weight <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>  draw <span class="op">=</span> <span class="cn">T</span></span>
@@ -78,6 +80,14 @@
 
 <dt id="arg-optim-method">optim_method<a class="anchor" aria-label="anchor" href="#arg-optim-method"></a></dt>
 <dd><p>The method used for granularity level optimization. Default is trading off between sparsity and dubious rate</p></dd>
+
+
+<dt id="arg-thre-smooth">thre_smooth<a class="anchor" aria-label="anchor" href="#arg-thre-smooth"></a></dt>
+<dd><p>A boolean indicating whether to smooth the threshold function</p></dd>
+
+
+<dt id="arg-thre-bw">thre_bw<a class="anchor" aria-label="anchor" href="#arg-thre-bw"></a></dt>
+<dd><p>If thre_smooth is True, thre_bw specifies the bandwidth for smoothing.</p></dd>
 
 
 <dt id="arg-dub-rate">dub_rate<a class="anchor" aria-label="anchor" href="#arg-dub-rate"></a></dt>
@@ -115,7 +125,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>
