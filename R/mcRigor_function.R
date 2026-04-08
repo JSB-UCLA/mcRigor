@@ -48,7 +48,7 @@ mcRigor_DETECT <- function(obj_singlecell,
                            assay_type = c('RNA', 'ATAC'),
                            aggregate_method = c('mean', 'sum', 'geom'),
                            output_file = NULL,
-                           Nrep = 1,
+                           Nrep = 50,
                            gene_filter = 0.1, 
                            feature_use = 2000,
                            cor_method = c('pearson', 'spearman'),
@@ -966,7 +966,7 @@ mcRigor_buildmc <- function(obj_singlecell,
       stop('To add test results to the metacell object, please provide the calculated test statistics (test_stats).')
     if (is.null(Thre)) {
       Thre = mcRigor_threshold(test_stats, test_cutoff = test_cutoff)$threshold
-      cat('Testing thresholds (Thre) not provided. Calculating thresholds with defaults...')
+      cat('Testing thresholds (Thre) not provided. Calculating thresholds with defaults...\n')
     }
     
     if (!all(colnames(obj_metacell) %in% rownames(test_stats))){
@@ -1271,13 +1271,13 @@ mcRigor_projection <- function(obj_singlecell, sc_membership = NULL,
   if(is.character(sc.reduction)){
     # if sc_reduction does not exist compute pca and run UMAP:
     if(is.null(obj_singlecell@reductions[[sc.reduction]])){
-      cat("Low dimensionnal embessing not found in obj_singlecell")
-      cat("Computing PCA ...")
+      cat("Low dimensionnal embedding not found in obj_singlecell.\n")
+      cat("Computing PCA ...\n")
       obj_singlecell <- Seurat::NormalizeData(obj_singlecell, verbose = F)
       obj_singlecell <- Seurat::FindVariableFeatures(obj_singlecell, verbose = F)
       obj_singlecell <- Seurat::ScaleData(obj_singlecell, verbose = F)
       obj_singlecell <- Seurat::RunPCA(obj_singlecell, verbose = F)
-      cat("Running UMAP ...")
+      cat("Running UMAP ...\n")
       obj_singlecell <- Seurat::RunUMAP(obj_singlecell, reduction = "pca", dims = c(1:20), verbose = F)
       scCoord <- Seurat::Embeddings(obj_singlecell@reductions[["umap"]])
     } else{
