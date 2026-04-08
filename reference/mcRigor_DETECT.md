@@ -13,7 +13,7 @@ mcRigor_DETECT(
   assay_type = c("RNA", "ATAC"),
   aggregate_method = c("mean", "sum", "geom"),
   output_file = NULL,
-  Nrep = 1,
+  Nrep = 50,
   gene_filter = 0.1,
   feature_use = 2000,
   cor_method = c("pearson", "spearman"),

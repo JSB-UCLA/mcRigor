@@ -98,7 +98,7 @@ the Seurat object with name `mcRigor`.
 table(detect_res$mc_res)
 #> 
 #>     dubious trustworthy 
-#>          56         212
+#>          39         229
 obj_metacell = detect_res$obj_metacell
 head(obj_metacell$mcRigor)
 #>   mc50-allcells-SEACell-0   mc50-allcells-SEACell-1  mc50-allcells-SEACell-10 
@@ -175,7 +175,7 @@ sessionInfo()
 #>  [46] bookdown_0.46          knitr_1.51             tensor_1.5.1          
 #>  [49] future.apply_1.20.2    zoo_1.8-15             sctransform_0.4.3     
 #>  [52] httpuv_1.6.17          Matrix_1.7-4           splines_4.5.3         
-#>  [55] igraph_2.2.2           tidyselect_1.2.1       abind_1.4-8           
+#>  [55] igraph_2.2.3           tidyselect_1.2.1       abind_1.4-8           
 #>  [58] yaml_2.3.12            spatstat.random_3.4-5  spatstat.explore_3.8-0
 #>  [61] codetools_0.2-20       miniUI_0.1.2           listenv_0.10.1        
 #>  [64] plyr_1.8.9             lattice_0.22-9         tibble_3.3.1          

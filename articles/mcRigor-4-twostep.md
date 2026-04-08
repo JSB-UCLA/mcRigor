@@ -80,7 +80,7 @@ detect_res = mcRigor_DETECT(obj_singlecell = obj_singlecell, cell_membership = c
 table(detect_res$mc_res)
 #> 
 #>     dubious trustworthy 
-#>          28         240
+#>          27         241
 ```
 
 We proceed with mcRigor two-step because dubious metacells exist in this
@@ -225,7 +225,7 @@ sessionInfo()
 #>  [46] bookdown_0.46          knitr_1.51             tensor_1.5.1          
 #>  [49] future.apply_1.20.2    zoo_1.8-15             sctransform_0.4.3     
 #>  [52] httpuv_1.6.17          Matrix_1.7-4           splines_4.5.3         
-#>  [55] igraph_2.2.2           tidyselect_1.2.1       abind_1.4-8           
+#>  [55] igraph_2.2.3           tidyselect_1.2.1       abind_1.4-8           
 #>  [58] yaml_2.3.12            spatstat.random_3.4-5  spatstat.explore_3.8-0
 #>  [61] codetools_0.2-20       miniUI_0.1.2           listenv_0.10.1        
 #>  [64] plyr_1.8.9             lattice_0.22-9         tibble_3.3.1          
